@@ -1,0 +1,33 @@
+{
+  "id": "architectural-review",
+  "name": "ARC Requests",
+  "version": "1.0.0",
+  "description": "Homeowners submit modification requests for ARC committee review. Committee votes, issues decisions with written rationale, and tracks status to resolution.",
+  "entrypoint": "index.html",
+  "runtime": "static",
+  "category": "tools",
+  "tags": ["hoa", "arc", "architectural", "review", "modifications", "approval"],
+  "data_access": {
+    "reads": ["family.members"],
+    "writes": []
+  },
+  "permissions": {
+    "default_audience": "everyone",
+    "requires_approval": false
+  },
+  "storage": "db",
+  "nav": {
+    "label": "ARC Requests"
+  },
+  "resource_limits": {
+    "max_db_bytes": 209715200,
+    "max_files_bytes": 524288000,
+    "max_docs_bytes": 524288000
+  },
+  "icon": "🏛️",
+  "ai_access": {
+    "allowed": true,
+    "mode": "read",
+    "db_exports": ["open_requests", "all_requests"]
+  }
+}

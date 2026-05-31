@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ARC Requests</title>
+  <base href="/run/architectural-review/" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:           var(--hub-bg, #f9fafb);
+      --card:         var(--hub-surface, #ffffff);
+      --border:       var(--hub-border, #e5e7eb);
+      --text:         var(--hub-text, #111827);
+      --muted:        var(--hub-text-muted, #6b7280);
+      --accent:       var(--hub-primary, #111827);
+      --accent-fg:    var(--hub-primary-fg, #ffffff);
+      --accent-hover: var(--hub-primary-hover, #374151);
+      --radius:       var(--hub-radius, 0.5rem);
+      --shadow:       0 1px 3px rgba(0,0,0,.07);
+    }
+
+    body {
+      font-family: var(--hub-font, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+      background: var(--bg); color: var(--text);
+      min-height: 100vh; font-size: var(--hub-font-size, 15px); line-height: 1.5;
+    }
+    .app { max-width: 640px; margin: 0 auto; padding: 16px; }
+
+    header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 16px; padding: 14px 18px;
+      background: var(--accent); border-radius: var(--radius); color: white;
+    }
+    header h1 { font-size: 1.2rem; font-weight: 700; }
+    header .sub { font-size: 0.8rem; opacity: .75; margin-top: 1px; }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 16px; border-radius: 8px;
+      font-size: 0.875rem; font-weight: 600; cursor: pointer; border: none; transition: opacity .15s;
+    }
+    .btn:disabled { opacity: .5; cursor: default; }
+    .btn-primary  { background: var(--accent); color: white; }
+    .btn-primary:hover:not(:disabled) { opacity: .88; }
+    .btn-ghost    { background: transparent; color: var(--muted); border: 1.5px solid var(--border); }
+    .btn-ghost:hover { border-color: var(--text); color: var(--text); }
+    .btn-danger   { background: #dc2626; color: white; }
+    .btn-danger:hover:not(:disabled) { opacity: .88; }
+    .btn-icon     { background: rgba(255,255,255,.2); color: white; border: none; font-size: 1.3rem; padding: 4px 10px; border-radius: 8px; cursor: pointer; line-height: 1; }
+    .btn-icon:hover { background: rgba(255,255,255,.3); }
+    .btn-sm       { padding: 5px 12px; font-size: 0.8rem; }
+    .btn-approve  { background: #16a34a; color: white; }
+    .btn-approve:hover:not(:disabled) { opacity: .88; }
+    .btn-conditions { background: #ca8a04; color: white; }
+    .btn-conditions:hover:not(:disabled) { opacity: .88; }
+    .btn-deny     { background: #dc2626; color: white; }
+    .btn-deny:hover:not(:disabled) { opacity: .88; }
+
+    .item-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+    .item-tab {
+      padding: 6px 14px; border-radius: 20px;
+      border: 1.5px solid var(--border); background: var(--card);
+      font-size: 0.88rem; font-weight: 600; cursor: pointer; color: var(--muted); transition: all .15s;
+    }
+    .item-tab.active { border-color: var(--accent); background: #f3f4f6; color: var(--accent); }
+
+    .card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 14px 16px;
+      box-shadow: var(--shadow); margin-bottom: 10px;
+    }
+
+    .req-card {
+      background: var(--card); border: 1.5px solid var(--border);
+      border-radius: var(--radius); padding: 14px 16px;
+      box-shadow: var(--shadow); margin-bottom: 10px;
+      cursor: pointer; transition: border-color .15s;
+    }
+    .req-card:hover { border-color: var(--accent); }
+    .req-top { display: flex; align-items: flex-start; gap: 10px; }
+    .req-icon { font-size: 1.5rem; flex-shrink: 0; line-height: 1.3; }
+    .req-title-wrap { flex: 1; min-width: 0; }
+    .req-title { font-weight: 700; font-size: 0.95rem; }
+    .req-meta  { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+    .req-footer { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: 8px; }
+
+    .badge {
+      display: inline-flex; align-items: center;
+      padding: 3px 10px; border-radius: 12px;
+      font-size: 0.78rem; font-weight: 600; color: white; white-space: nowrap;
+    }
+    .badge-sm { padding: 2px 8px; font-size: 0.72rem; }
+    .badge-outline {
+      background: transparent !important; border: 1.5px solid var(--border);
+      color: var(--muted) !important;
+    }
+
+    .section-title { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: 10px; }
+
+    .vote-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 0; border-bottom: 1px solid var(--border);
+    }
+    .vote-row:last-child { border-bottom: none; }
+    .vote-avatar { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 700; color: white; flex-shrink: 0; }
+    .vote-pill {
+      padding: 2px 10px; border-radius: 10px; font-size: 0.75rem; font-weight: 700; color: white;
+    }
+
+    .tally-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+    .tally-item { display: flex; align-items: center; gap: 5px; font-size: 0.82rem; }
+    .tally-dot  { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+    .vote-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+    .vote-btn {
+      flex: 1; min-width: 90px; padding: 8px 12px; border-radius: 8px;
+      border: 1.5px solid var(--border); background: var(--card);
+      font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: all .15s; color: var(--muted);
+      text-align: center;
+    }
+    .vote-btn:hover   { border-color: var(--text); color: var(--text); }
+    .vote-btn.my-vote { color: white; border-color: transparent; }
+    .vote-btn.my-vote.approve     { background: #16a34a; }
+    .vote-btn.my-vote.conditions  { background: #ca8a04; }
+    .vote-btn.my-vote.deny        { background: #dc2626; }
+
+    .comment-row { display: flex; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+    .comment-row:last-child { border-bottom: none; }
+    .comment-avatar { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.72rem; font-weight: 700; color: white; flex-shrink: 0; margin-top: 2px; }
+    .comment-meta { font-size: 0.78rem; color: var(--muted); margin-bottom: 3px; }
+    .comment-text { font-size: 0.88rem; line-height: 1.5; }
+
+    .doc-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px; background: var(--card);
+      border: 1px solid var(--border); border-radius: 8px;
+      margin-bottom: 8px; text-decoration: none; color: inherit;
+    }
+    .doc-row:hover { border-color: var(--accent); }
+    .doc-icon { font-size: 1.2rem; flex-shrink: 0; }
+    .doc-info { flex: 1; min-width: 0; }
+    .doc-name { font-weight: 600; font-size: 0.88rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .doc-meta { font-size: 0.75rem; color: var(--muted); }
+
+    .upload-area {
+      border: 2px dashed var(--border); border-radius: 8px;
+      padding: 16px; text-align: center; color: var(--muted);
+      font-size: 0.88rem; cursor: pointer; transition: all .15s;
+    }
+    .upload-area:hover { border-color: var(--accent); color: var(--accent); background: #f3f4f6; }
+    .upload-area.dragover { border-color: var(--accent); background: #f3f4f6; }
+
+    .decision-box {
+      border-radius: var(--radius); padding: 14px 16px; margin-bottom: 10px;
+    }
+    .decision-box.approved           { background: #f0fdf4; border: 1px solid #bbf7d0; }
+    .decision-box.approved_with_conditions { background: #fefce8; border: 1px solid #fde68a; }
+    .decision-box.denied             { background: #fef2f2; border: 1px solid #fecaca; }
+
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: flex; align-items: flex-end; justify-content: center; z-index: 100; }
+    @media (min-width: 480px) { .modal-backdrop { align-items: center; padding: 20px; } }
+    .modal { background: white; border-radius: var(--radius) var(--radius) 0 0; width: 100%; max-width: 520px; padding: 22px; max-height: 92vh; overflow-y: auto; }
+    @media (min-width: 480px) { .modal { border-radius: var(--radius); } }
+    .modal h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 16px; }
+    .modal-actions { display: flex; gap: 8px; margin-top: 18px; flex-wrap: wrap; }
+    .modal-actions .btn { flex: 1; justify-content: center; min-width: 90px; }
+
+    .form-group { margin-bottom: 14px; }
+    .form-group label { display: block; font-size: 0.78rem; font-weight: 700; color: var(--muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: .04em; }
+    .form-group input, .form-group select, .form-group textarea {
+      width: 100%; border: 1.5px solid var(--border); border-radius: 8px;
+      padding: 9px 12px; font-size: 0.95rem; outline: none; transition: border-color .15s;
+      background: white; font-family: inherit; color: inherit;
+    }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--accent); }
+    .form-group textarea { resize: vertical; min-height: 72px; }
+    .form-row { display: flex; gap: 10px; }
+    .form-row > * { flex: 1; }
+    .muted-label { font-weight: 400; text-transform: none; color: var(--muted); }
+
+    .empty    { text-align: center; padding: 36px 16px; color: var(--muted); font-size: 0.9rem; }
+    .empty-sm { font-size: 0.85rem; color: var(--muted); padding: 6px 0; }
+    .loading  { text-align: center; padding: 40px; color: var(--muted); }
+    .back-link { font-size: 0.8rem; opacity: .75; cursor: pointer; margin-bottom: 3px; display: inline-block; }
+    .back-link:hover { opacity: 1; }
+  </style>
+</head>
+<body>
+<div class="app">
+  <div id="root"><div class="loading">Loading…</div></div>
+</div>
+<script type="module">
+import { memberColor, initial, esc, isAdult, hubConfirm, createFilesHelper } from "/hub-sdk.js";
+
+const CONTEXT = window.__CONTEXT_URL ?? "";
+const DB      = window.__DB_URL      ?? "";
+const DOCS    = window.__DOCS_URL    ?? "";
+const ME      = window.__CURRENT_MEMBER ?? null;
+const APP_ID  = window.__APP_ID ?? "architectural-review";
+const files   = createFilesHelper(window.__FILES_URL ?? "");
+
+let members  = [];
+let requests = [];
+let votes    = {};
+let comments = {};
+let docs     = {};
+let filter   = "open";
+let detailId = null;
+let modalEl  = null;
+
+async function db(sql, params = []) {
+  if (!DB) return { rows: [] };
+  const res = await fetch(DB, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ sql, params }),
+  });
+  return res.json();
+}
+
+async function loadMembers() {
+  if (!CONTEXT) {
+    members = [
+      { id: "demo-1", name: "Alex",    role: "adult" },
+      { id: "demo-2", name: "Jordan",  role: "adult" },
+      { id: "demo-3", name: "Sam",     role: "adult" },
+      { id: "demo-4", name: "Taylor",  role: "adult" },
+    ];
+    return;
+  }
+  try {
+    const res = await fetch(`${CONTEXT}?keys=family.members`);
+    members = ((await res.json())["family.members"]) ?? [];
+  } catch { members = []; }
+}
+
+function demoAgo(days) { return new Date(Date.now() - days * 86400000).toISOString(); }
+
+async function loadRequests() {
+  if (!DB) {
+    requests = [
+      { id: "d1", title: "Wood privacy fence along east property line", description: "6-foot cedar privacy fence, natural finish, running 120 feet along the east property boundary.", category: "fence",      unit_ref: "Lot 14",  status: "under_review",           submitted_by: "demo-1", decision_note: "",                                             decided_at: null,       decided_by: null,     created_at: demoAgo(7),  updated_at: demoAgo(2) },
+      { id: "d2", title: "Repaint exterior — Sherwin Williams Repose Gray", description: "Full exterior repaint. Current color: beige. Proposed: Repose Gray (SW 7015) with white trim.", category: "paint",      unit_ref: "Unit 4B", status: "approved",               submitted_by: "demo-2", decision_note: "Color is consistent with community palette. Approved for spring season.", decided_at: demoAgo(3), decided_by: "demo-1", created_at: demoAgo(14), updated_at: demoAgo(3) },
+      { id: "d3", title: "Detached garage addition — 20×24 ft", description: "Single-car detached garage, 20×24 sq ft, to match existing exterior materials.", category: "addition",    unit_ref: "Lot 7",   status: "approved_with_conditions", submitted_by: "demo-3", decision_note: "Approved provided the roofline matches the primary structure and setback requirements are met.", decided_at: demoAgo(1), decided_by: "demo-2", created_at: demoAgo(21), updated_at: demoAgo(1) },
+      { id: "d4", title: "Front yard xeriscaping and rock garden", description: "Replace front lawn with drought-tolerant native plants and decorative gravel.", category: "landscaping", unit_ref: "Lot 22",  status: "pending",                submitted_by: "demo-4", decision_note: "",                                             decided_at: null,       decided_by: null,     created_at: demoAgo(1),  updated_at: demoAgo(1) },
+      { id: "d5", title: "12×16 rear deck addition",              description: "Pressure-treated lumber deck off back door, 12×16 ft, with railing.", category: "deck",       unit_ref: "Lot 9",   status: "denied",                 submitted_by: "demo-1", decision_note: "Deck footprint exceeds allowable rear setback. Please resubmit with revised dimensions.", decided_at: demoAgo(5), decided_by: "demo-1", created_at: demoAgo(18), updated_at: demoAgo(5) },
+    ];
+    return;
+  }
+  const { rows } = await db(`SELECT * FROM requests ORDER BY created_at DESC`);
+  requests = rows ?? [];
+}
+
+async function loadVotes(requestId) {
+  if (!DB) {
+    votes[requestId] = requestId === "d1"
+      ? [
+          { id: "v1", request_id: "d1", voter_id: "demo-1", vote: "approve",             notes: "Matches neighborhood aesthetic.", created_at: demoAgo(6) },
+          { id: "v2", request_id: "d1", voter_id: "demo-2", vote: "approve_with_conditions", notes: "Gate must comply with HOA spec.", created_at: demoAgo(5) },
+        ]
+      : [];
+    return;
+  }
+  const { rows } = await db(
+    `SELECT * FROM votes WHERE request_id = ? ORDER BY created_at`,
+    [requestId]
+  );
+  votes[requestId] = rows ?? [];
+}
+
+async function loadComments(requestId) {
+  if (!DB) { comments[requestId] = []; return; }
+  const { rows } = await db(
+    `SELECT * FROM comments WHERE request_id = ? ORDER BY created_at`,
+    [requestId]
+  );
+  comments[requestId] = rows ?? [];
+}
+
+async function loadDocs(requestId) {
+  docs[requestId] = [];
+  if (!DOCS) return;
+  const res = await fetch(`${DOCS}?sourceId=${encodeURIComponent(requestId)}`);
+  docs[requestId] = res.ok ? await res.json() : [];
+}
+
+// ─── Constants ─────────────────────────────────────────────────────────────
+
+const STATUS_LABELS = {
+  pending:                 "Pending",
+  under_review:            "Under Review",
+  approved:                "Approved",
+  approved_with_conditions:"Approved w/ Conditions",
+  denied:                  "Denied",
+};
+const STATUS_COLORS = {
+  pending:                 "#6b7280",
+  under_review:            "#2563eb",
+  approved:                "#16a34a",
+  approved_with_conditions:"#ca8a04",
+  denied:                  "#dc2626",
+};
+const VOTE_COLORS = { approve: "#16a34a", approve_with_conditions: "#ca8a04", deny: "#dc2626" };
+const VOTE_LABELS = { approve: "Approve", approve_with_conditions: "Approve w/ Conditions", deny: "Deny" };
+const CAT_LABELS  = { fence: "Fence", paint: "Paint/Color", addition: "Addition", landscaping: "Landscaping", roof: "Roof/Gutter", deck: "Deck/Patio", driveway: "Driveway", other: "Other" };
+const CAT_ICONS   = { fence: "🚧", paint: "🎨", addition: "🏗️", landscaping: "🌿", roof: "🏠", deck: "🪵", driveway: "🚗", other: "📋" };
+const CATEGORIES  = ["fence", "paint", "addition", "landscaping", "roof", "deck", "driveway", "other"];
+
+function memberName(id) { return members.find(m => m.id === id)?.name ?? "Unknown"; }
+function fmtDate(iso) {
+  if (!iso) return "";
+  return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+function docIcon(name) {
+  if (/\.(jpg|jpeg|png|gif|webp|heic)$/i.test(name)) return "🖼️";
+  if (/\.pdf$/i.test(name)) return "📄";
+  return "📎";
+}
+function formatBytes(b) {
+  if (!b) return "";
+  if (b < 1024) return `${b} B`;
+  if (b < 1024 * 1024) return `${(b / 1024).toFixed(0)} KB`;
+  return `${(b / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+// ─── DB ops ─────────────────────────────────────────────────────────────────
+
+async function submitRequest(fields) {
+  const id  = crypto.randomUUID();
+  const now = new Date().toISOString();
+  await db(
+    `INSERT INTO requests (id, title, description, category, unit_ref, status, submitted_by, decision_note, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, 'pending', ?, '', ?, ?)`,
+    [id, fields.title, fields.description, fields.category, fields.unit_ref, ME?.id ?? "system", now, now]
+  );
+  await Promise.all([
+    notify(`New ARC request: ${fields.title}`, `${ME?.name ?? "Someone"} submitted an ARC request.`),
+    loadRequests(),
+  ]);
+  return id;
+}
+
+async function castVote(requestId, voteValue, notes) {
+  if (!ME) return;
+  const now = new Date().toISOString();
+  await db(`DELETE FROM votes WHERE request_id = ? AND voter_id = ?`, [requestId, ME.id]);
+  const id = crypto.randomUUID();
+  await db(
+    `INSERT INTO votes (id, request_id, voter_id, vote, notes, created_at) VALUES (?, ?, ?, ?, ?, ?)`,
+    [id, requestId, ME.id, voteValue, notes, now]
+  );
+  votes[requestId] = (votes[requestId] ?? []).filter(v => v.voter_id !== ME.id);
+  votes[requestId] = [...votes[requestId], { id, request_id: requestId, voter_id: ME.id, vote: voteValue, notes, created_at: now }];
+  const req = requests.find(r => r.id === requestId);
+  if (req?.status === "pending") {
+    await db(`UPDATE requests SET status = 'under_review', updated_at = ? WHERE id = ?`, [now, requestId]);
+    requests = requests.map(r => r.id === requestId ? { ...r, status: "under_review" } : r);
+  }
+}
+
+async function issueDecision(requestId, decision, rationale) {
+  if (!ME) return;
+  const now = new Date().toISOString();
+  await db(
+    `UPDATE requests SET status = ?, decision_note = ?, decided_at = ?, decided_by = ?, updated_at = ? WHERE id = ?`,
+    [decision, rationale, now, ME.id, now, requestId]
+  );
+  requests = requests.map(r =>
+    r.id === requestId ? { ...r, status: decision, decision_note: rationale, decided_at: now, decided_by: ME.id } : r
+  );
+}
+
+async function addComment(requestId, body) {
+  const id  = crypto.randomUUID();
+  const now = new Date().toISOString();
+  await db(
+    `INSERT INTO comments (id, request_id, author_id, body, created_at) VALUES (?, ?, ?, ?, ?)`,
+    [id, requestId, ME?.id ?? "system", body, now]
+  );
+  if (!comments[requestId]) comments[requestId] = [];
+  comments[requestId] = [
+    ...comments[requestId],
+    { id, request_id: requestId, author_id: ME?.id ?? "system", body, created_at: now },
+  ];
+}
+
+async function uploadDoc(file, requestId) {
+  if (!DOCS || !ME) return;
+  const area = document.getElementById("upload-area");
+  if (area) area.textContent = "⏳ Uploading…";
+  try {
+    const { id: fileId } = await files.upload(file);
+    const res = await fetch(DOCS, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: file.name, category: "home",
+        fileKey: fileId, mimeType: file.type, sizeBytes: file.size,
+        sourceId: requestId, sharedWith: ["everyone"],
+      }),
+    });
+    const { id: docId } = await res.json();
+    if (!docs[requestId]) docs[requestId] = [];
+    docs[requestId] = [
+      { id: docId, title: file.name, fileKey: fileId, mimeType: file.type, sizeBytes: file.size, createdAt: new Date().toISOString() },
+      ...docs[requestId],
+    ];
+    renderDetail();
+  } catch (err) {
+    alert("Upload failed: " + err.message);
+    renderDetail();
+  }
+}
+
+async function deleteDoc(docId, fileKey) {
+  if (!await hubConfirm({ message: "Remove this document?", confirmLabel: "Remove", destructive: true })) return;
+  await fetch(`${DOCS}/${docId}`, { method: "DELETE" });
+  if (fileKey) await files.delete(fileKey).catch(() => {});
+  if (docs[detailId]) docs[detailId] = docs[detailId].filter(d => d.id !== docId);
+  renderDetail();
+}
+
+async function deleteRequest(id) {
+  if (!await hubConfirm({ message: "Delete this request?", description: "All votes, comments, and documents will also be removed.", confirmLabel: "Delete", destructive: true })) return false;
+  await db(`DELETE FROM requests WHERE id = ?`, [id]);
+  await db(`DELETE FROM votes WHERE request_id = ?`, [id]);
+  await db(`DELETE FROM comments WHERE request_id = ?`, [id]);
+  if (DOCS) {
+    const docList = docs[id] ?? [];
+    for (const d of docList) {
+      await fetch(`${DOCS}/${d.id}`, { method: "DELETE" });
+      if (d.fileKey) await files.delete(d.fileKey).catch(() => {});
+    }
+  }
+  requests = requests.filter(r => r.id !== id);
+  delete votes[id]; delete comments[id]; delete docs[id];
+  return true;
+}
+
+async function notify(title, body) {
+  await fetch("/api/notifications/send", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ title, body, url: `/run/${APP_ID}` }),
+  }).catch(() => {});
+}
+
+// ─── Modal ──────────────────────────────────────────────────────────────────
+
+function openModal(html) {
+  closeModal();
+  modalEl = document.createElement("div");
+  modalEl.className = "modal-backdrop";
+  modalEl.innerHTML = `<div class="modal">${html}</div>`;
+  modalEl.addEventListener("click", e => { if (e.target === modalEl) closeModal(); });
+  document.body.appendChild(modalEl);
+}
+function closeModal() { modalEl?.remove(); modalEl = null; }
+
+// ─── Submit form ────────────────────────────────────────────────────────────
+
+function openSubmitForm() {
+  openModal(`
+    <h3>🏛️ Submit ARC Request</h3>
+    <div class="form-group">
+      <label>Title</label>
+      <input id="f-title" type="text" placeholder="6-foot cedar privacy fence, Exterior paint change…" autofocus />
+    </div>
+    <div class="form-group">
+      <label>Description</label>
+      <textarea id="f-desc" rows="4" placeholder="Describe the proposed modification in detail — dimensions, materials, colors, contractor plans…"></textarea>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Category</label>
+        <select id="f-cat">
+          ${CATEGORIES.map(c => `<option value="${c}">${CAT_ICONS[c]} ${CAT_LABELS[c]}</option>`).join("")}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Unit / Lot <span class="muted-label">(optional)</span></label>
+        <input id="f-unit" type="text" placeholder="Lot 14, Unit 4B…" />
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="submitForm()">Submit Request</button>
+    </div>`);
+}
+
+window.submitForm = async function() {
+  const title = document.getElementById("f-title").value.trim();
+  if (!title) { document.getElementById("f-title").focus(); return; }
+  const desc = document.getElementById("f-desc").value.trim();
+  if (!desc) { document.getElementById("f-desc").focus(); return; }
+  const btn = modalEl?.querySelector(".modal-actions .btn-primary");
+  if (btn) { btn.disabled = true; btn.textContent = "Submitting…"; }
+  try {
+    const id = await submitRequest({
+      title, description: desc,
+      category: document.getElementById("f-cat").value,
+      unit_ref: document.getElementById("f-unit").value.trim(),
+    });
+    closeModal();
+    detailId = id;
+    await Promise.all([loadVotes(id), loadComments(id), loadDocs(id)]);
+    renderDetail();
+  } catch (e) {
+    if (btn) { btn.disabled = false; btn.textContent = "Submit Request"; }
+    throw e;
+  }
+};
+
+// ─── Vote modal ─────────────────────────────────────────────────────────────
+
+function openVoteModal(existingVote) {
+  openModal(`
+    <h3>Cast Your Vote</h3>
+    <div class="form-group">
+      <label>Your Vote</label>
+      <select id="v-vote">
+        ${["approve","approve_with_conditions","deny"].map(v => `
+          <option value="${v}" ${existingVote?.vote === v ? "selected" : ""}>${VOTE_LABELS[v]}</option>`).join("")}
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Notes <span class="muted-label">(optional)</span></label>
+      <textarea id="v-notes" rows="3" placeholder="Rationale, conditions, concerns…">${esc(existingVote?.notes ?? "")}</textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="submitVote()">Submit Vote</button>
+    </div>`);
+}
+
+window.submitVote = async function() {
+  const voteValue = document.getElementById("v-vote").value;
+  const notes     = document.getElementById("v-notes").value.trim();
+  const btn = modalEl?.querySelector(".modal-actions .btn-primary");
+  if (btn) { btn.disabled = true; btn.textContent = "Saving…"; }
+  try {
+    await castVote(detailId, voteValue, notes);
+    closeModal();
+    renderDetail();
+  } catch (e) {
+    if (btn) { btn.disabled = false; btn.textContent = "Submit Vote"; }
+    throw e;
+  }
+};
+
+// ─── Decision modal ─────────────────────────────────────────────────────────
+
+function openDecisionModal(req) {
+  openModal(`
+    <h3>Issue Decision</h3>
+    <p style="font-size:.88rem;color:var(--muted);margin-bottom:16px">This decision will be recorded and visible to the submitter.</p>
+    <div class="form-group">
+      <label>Decision</label>
+      <select id="d-decision">
+        <option value="approved">✅ Approved</option>
+        <option value="approved_with_conditions">⚠️ Approved with Conditions</option>
+        <option value="denied">❌ Denied</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Written Rationale</label>
+      <textarea id="d-rationale" rows="4" placeholder="Provide the committee's reasoning and any conditions or requirements…">${esc(req.decision_note ?? "")}</textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="submitDecision()">Issue Decision</button>
+    </div>`);
+}
+
+window.submitDecision = async function() {
+  const decision  = document.getElementById("d-decision").value;
+  const rationale = document.getElementById("d-rationale").value.trim();
+  if (!rationale) { document.getElementById("d-rationale").focus(); return; }
+  const btn = modalEl?.querySelector(".modal-actions .btn-primary");
+  if (btn) { btn.disabled = true; btn.textContent = "Saving…"; }
+  try {
+    await issueDecision(detailId, decision, rationale);
+    await notify(
+      `ARC decision: ${STATUS_LABELS[decision]}`,
+      `Your ARC request has received a decision: ${STATUS_LABELS[decision]}.`
+    );
+    closeModal();
+    renderDetail();
+  } catch (e) {
+    if (btn) { btn.disabled = false; btn.textContent = "Issue Decision"; }
+    throw e;
+  }
+};
+
+// ─── Detail view ────────────────────────────────────────────────────────────
+
+async function openDetail(id) {
+  detailId = id;
+  const pending = [];
+  if (!votes[id])    pending.push(loadVotes(id));
+  if (!comments[id]) pending.push(loadComments(id));
+  if (!docs[id])     pending.push(loadDocs(id));
+  if (pending.length) await Promise.all(pending);
+  renderDetail();
+}
+
+function renderDetail() {
+  const req = requests.find(r => r.id === detailId);
+  if (!req) { detailId = null; renderList(); return; }
+
+  const meIsAdmin  = isAdult(ME);
+  const catIcon    = CAT_ICONS[req.category]  ?? "📋";
+  const catLabel   = CAT_LABELS[req.category] ?? req.category;
+  const statColor  = STATUS_COLORS[req.status] ?? "#6b7280";
+  const statLabel  = STATUS_LABELS[req.status] ?? req.status;
+  const isDecided  = ["approved","approved_with_conditions","denied"].includes(req.status);
+  const isActive   = ["pending","under_review"].includes(req.status);
+
+  // ── Votes section ──
+  const reqVotes  = votes[detailId] ?? [];
+  const myVote    = ME ? reqVotes.find(v => v.voter_id === ME.id) : null;
+  const tally     = { approve: 0, approve_with_conditions: 0, deny: 0 };
+  for (const v of reqVotes) { if (tally[v.vote] !== undefined) tally[v.vote]++; }
+
+  const votePanelHtml = meIsAdmin && isActive ? `
+    <div class="card">
+      <div class="section-title">Committee Votes</div>
+      ${reqVotes.length > 0 ? `
+        <div class="tally-bar">
+          ${Object.entries(tally).filter(([,n]) => n > 0).map(([v, n]) => `
+            <div class="tally-item">
+              <span class="tally-dot" style="background:${VOTE_COLORS[v]}"></span>
+              <span>${VOTE_LABELS[v]}: <strong>${n}</strong></span>
+            </div>`).join("")}
+        </div>
+        ${reqVotes.map(v => {
+          const m   = members.find(x => x.id === v.voter_id);
+          const col = memberColor(m?.id ?? "", members);
+          return `
+            <div class="vote-row">
+              <div style="display:flex;align-items:center;gap:8px">
+                <div class="vote-avatar" style="background:${col}">${initial(m?.name ?? "?")}</div>
+                <div>
+                  <div style="font-size:.88rem;font-weight:600">${esc(m?.name ?? "Unknown")}</div>
+                  ${v.notes ? `<div style="font-size:.78rem;color:var(--muted);font-style:italic">${esc(v.notes)}</div>` : ""}
+                </div>
+              </div>
+              <span class="vote-pill" style="background:${VOTE_COLORS[v.vote]}">${VOTE_LABELS[v.vote]}</span>
+            </div>`;
+        }).join("")}` : `<div class="empty-sm">No votes yet — be the first to vote.</div>`}
+      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-sm ${myVote ? "btn-ghost" : "btn-primary"}" onclick="openVoteModal()">
+          ${myVote ? `Edit Vote (currently: ${VOTE_LABELS[myVote.vote]})` : "Cast Vote"}
+        </button>
+        ${meIsAdmin && reqVotes.length > 0 ? `
+          <button class="btn btn-sm btn-primary" onclick="openDecisionModal()">Issue Decision →</button>` : ""}
+      </div>
+    </div>` : "";
+
+  // ── Decision box ──
+  const decisionHtml = isDecided ? `
+    <div class="decision-box ${req.status}">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <span class="badge" style="background:${statColor}">${statLabel}</span>
+        <span style="font-size:.8rem;color:var(--muted)">${fmtDate(req.decided_at)} · ${req.decided_by ? esc(memberName(req.decided_by)) : "ARC Committee"}</span>
+      </div>
+      ${req.decision_note ? `<p style="font-size:.9rem;line-height:1.6;white-space:pre-wrap">${esc(req.decision_note)}</p>` : ""}
+      ${meIsAdmin ? `<div style="margin-top:10px"><button class="btn btn-ghost btn-sm" onclick="openDecisionModal()">Revise Decision</button></div>` : ""}
+    </div>` : "";
+
+  // ── Documents ──
+  const reqDocs   = docs[detailId] ?? [];
+  const docsHtml  = reqDocs.map(d => `
+    <a class="doc-row" href="${esc(files.url(d.fileKey))}" target="_blank" rel="noopener" onclick="event.stopPropagation()">
+      <span class="doc-icon">${docIcon(d.title)}</span>
+      <div class="doc-info">
+        <div class="doc-name">${esc(d.title)}</div>
+        <div class="doc-meta">${formatBytes(d.sizeBytes ?? 0)} · ${fmtDate(d.createdAt)}</div>
+      </div>
+      ${meIsAdmin ? `<button class="btn btn-ghost btn-sm" onclick="event.preventDefault();doDelDoc('${d.id}','${esc(d.fileKey ?? '')}')">✕</button>` : ""}
+    </a>`).join("");
+
+  const uploadHtml = window.__FILES_URL ? `
+    <div class="upload-area" id="upload-area"
+      onclick="triggerUpload()"
+      ondragover="event.preventDefault();this.classList.add('dragover')"
+      ondragleave="this.classList.remove('dragover')"
+      ondrop="handleDrop(event)">
+      📎 Attach photos, plans, or supporting documents
+    </div>
+    <input type="file" id="file-input" style="display:none" accept="image/*,.pdf,.docx,.xlsx,.txt,.md" onchange="handleFileSelect(this)" />` : "";
+
+  // ── Comments ──
+  const commentsArr  = comments[detailId] ?? [];
+  const commentsHtml = commentsArr.length === 0
+    ? `<div class="empty-sm">No comments yet.</div>`
+    : commentsArr.map(c => {
+        const m   = members.find(x => x.id === c.author_id);
+        const col = memberColor(m?.id ?? "", members);
+        return `
+          <div class="comment-row">
+            <div class="comment-avatar" style="background:${col}">${initial(m?.name ?? "?")}</div>
+            <div style="flex:1;min-width:0">
+              <div class="comment-meta"><strong>${esc(m?.name ?? "Someone")}</strong> · ${fmtDate(c.created_at)}</div>
+              <div class="comment-text">${esc(c.body)}</div>
+            </div>
+          </div>`;
+      }).join("");
+
+  document.getElementById("root").innerHTML = `
+    <header>
+      <div>
+        <div class="back-link" onclick="backToList()">← All Requests</div>
+        <h1>${catIcon} ${esc(req.title)}</h1>
+        <div class="sub">${esc(catLabel)}${req.unit_ref ? ` · ${esc(req.unit_ref)}` : ""} · ${esc(memberName(req.submitted_by))} · ${fmtDate(req.created_at)}</div>
+      </div>
+    </header>
+
+    <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+      <span class="badge" style="background:${statColor}">${statLabel}</span>
+    </div>
+
+    <div class="card">
+      <p style="font-size:.9rem;line-height:1.6;white-space:pre-wrap">${esc(req.description)}</p>
+    </div>
+
+    ${decisionHtml}
+    ${votePanelHtml}
+
+    <div class="card">
+      <div class="section-title">Supporting Documents</div>
+      ${reqDocs.length === 0 ? `<div class="empty-sm" style="margin-bottom:10px">No documents attached.</div>` : docsHtml}
+      ${uploadHtml}
+    </div>
+
+    <div class="card">
+      <div class="section-title">Comments</div>
+      ${commentsHtml}
+      ${ME ? `
+        <div style="margin-top:12px;display:flex;gap:8px;align-items:flex-end">
+          <textarea id="comment-input" rows="2" placeholder="Add a comment…"
+            style="flex:1;border:1.5px solid var(--border);border-radius:8px;padding:8px 10px;font-size:.88rem;font-family:inherit;resize:none;outline:none;transition:border-color .15s;background:white;color:inherit"
+            onfocus="this.style.borderColor='var(--accent)'"
+            onblur="this.style.borderColor='var(--border)'"></textarea>
+          <button class="btn btn-primary btn-sm" id="post-btn" onclick="postComment()">Post</button>
+        </div>` : ""}
+    </div>
+
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button class="btn btn-ghost btn-sm" onclick="backToList()">← Back to List</button>
+      ${meIsAdmin ? `<button class="btn btn-danger btn-sm" onclick="doDelete('${esc(req.id)}')">Delete</button>` : ""}
+    </div>`;
+}
+
+window.backToList     = () => { detailId = null; render(); };
+window.openDetail     = openDetail;
+window.doDelete       = async id => { if (await deleteRequest(id)) { detailId = null; render(); } };
+window.openVoteModal  = () => {
+  const myVote = ME ? (votes[detailId] ?? []).find(v => v.voter_id === ME.id) : null;
+  openVoteModal(myVote);
+};
+window.openDecisionModal = () => {
+  const req = requests.find(r => r.id === detailId);
+  if (req) openDecisionModal(req);
+};
+window.doDelDoc = deleteDoc;
+
+window.triggerUpload = () => document.getElementById("file-input")?.click();
+window.handleFileSelect = input => {
+  const f = input.files[0]; if (f) uploadDoc(f, detailId); input.value = "";
+};
+window.handleDrop = e => {
+  e.preventDefault();
+  document.getElementById("upload-area")?.classList.remove("dragover");
+  const f = e.dataTransfer.files[0]; if (f) uploadDoc(f, detailId);
+};
+
+window.postComment = async function() {
+  const ta   = document.getElementById("comment-input");
+  const body = ta?.value.trim();
+  if (!body) { ta?.focus(); return; }
+  const btn = document.getElementById("post-btn");
+  if (btn) { btn.disabled = true; btn.textContent = "Posting…"; }
+  try {
+    await addComment(detailId, body);
+    renderDetail();
+  } catch (e) {
+    if (btn) { btn.disabled = false; btn.textContent = "Post"; }
+    throw e;
+  }
+};
+
+// ─── List view ──────────────────────────────────────────────────────────────
+
+function filteredRequests() {
+  if (filter === "all")      return requests;
+  if (filter === "decided")  return requests.filter(r => ["approved","approved_with_conditions","denied"].includes(r.status));
+  return requests.filter(r => ["pending","under_review"].includes(r.status));
+}
+
+function renderList() {
+  const filtered = filteredRequests();
+  const FILTERS  = ["open", "decided", "all"];
+  const FL       = { open: "Open", decided: "Decided", all: "All" };
+  const counts   = {
+    open:    requests.filter(r => ["pending","under_review"].includes(r.status)).length,
+    decided: requests.filter(r => ["approved","approved_with_conditions","denied"].includes(r.status)).length,
+    all:     requests.length,
+  };
+
+  const tabsHtml = FILTERS.map(f => `
+    <button class="item-tab ${filter === f ? "active" : ""}" onclick="setFilter('${f}')">
+      ${FL[f]} <span style="opacity:.6;font-weight:400">${counts[f]}</span>
+    </button>`).join("");
+
+  const cardsHtml = filtered.length === 0
+    ? `<div class="empty">No ${filter !== "all" ? FL[filter].toLowerCase() + " " : ""}requests.</div>`
+    : filtered.map(req => {
+        return `
+          <div class="req-card" onclick="openDetail('${req.id}')">
+            <div class="req-top">
+              <span class="req-icon">${CAT_ICONS[req.category] ?? "📋"}</span>
+              <div class="req-title-wrap">
+                <div class="req-title">${esc(req.title)}</div>
+                <div class="req-meta">${esc(CAT_LABELS[req.category] ?? req.category)}${req.unit_ref ? ` · ${esc(req.unit_ref)}` : ""} · ${fmtDate(req.created_at)}</div>
+              </div>
+            </div>
+            <div class="req-footer">
+              <span class="badge badge-sm" style="background:${STATUS_COLORS[req.status]}">${STATUS_LABELS[req.status]}</span>
+              <span style="font-size:.78rem;color:var(--muted)">${esc(memberName(req.submitted_by))}</span>
+            </div>
+          </div>`;
+      }).join("");
+
+  document.getElementById("root").innerHTML = `
+    <header>
+      <div><h1>🏛️ ARC Requests</h1><div class="sub">Architectural Review Committee</div></div>
+      ${ME ? `<button class="btn btn-icon" onclick="openSubmitForm()" title="Submit Request">＋</button>` : ""}
+    </header>
+    <div class="item-tabs">${tabsHtml}</div>
+    ${cardsHtml}`;
+}
+
+window.setFilter = f => { filter = f; renderList(); };
+
+// ─── Render / init ──────────────────────────────────────────────────────────
+
+function render() {
+  if (detailId) renderDetail();
+  else renderList();
+}
+
+function handleDeepLink() {
+  const id = new URLSearchParams(window.location.search).get("requestId");
+  if (id && requests.find(r => r.id === id)) openDetail(id);
+}
+
+window.openSubmitForm = openSubmitForm;
+window.closeModal     = closeModal;
+
+(async () => {
+  await loadMembers();
+  await loadRequests();
+  render();
+  handleDeepLink();
+})();
+</script>
+</body>
+</html>
