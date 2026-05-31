@@ -8,7 +8,7 @@
   "category": "tools",
   "tags": ["hoa", "arc", "architectural", "review", "modifications", "approval"],
   "data_access": {
-    "reads": ["family.members"],
+    "reads": ["family.members", "family.groups"],
     "writes": []
   },
   "permissions": {

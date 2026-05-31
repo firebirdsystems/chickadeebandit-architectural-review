@@ -193,6 +193,11 @@
 </div>
 <script type="module">
 import { memberColor, initial, esc, isAdult, hubConfirm, createFilesHelper } from "/hub-sdk.js";
+import {
+  committeeGroup as _committeeGroup,
+  isVoter       as _isVoter,
+  canSeeRequest  as _canSeeRequest,
+} from "./logic.js";
 
 const CONTEXT = window.__CONTEXT_URL ?? "";
 const DB      = window.__DB_URL      ?? "";
@@ -202,6 +207,8 @@ const APP_ID  = window.__APP_ID ?? "architectural-review";
 const files   = createFilesHelper(window.__FILES_URL ?? "");
 
 let members  = [];
+let groups   = [];
+let settings = { committee_group_id: null, default_visibility: "private" };
 let requests = [];
 let votes    = {};
 let comments = {};
@@ -231,9 +238,28 @@ async function loadMembers() {
     return;
   }
   try {
-    const res = await fetch(`${CONTEXT}?keys=family.members`);
-    members = ((await res.json())["family.members"]) ?? [];
-  } catch { members = []; }
+    const res  = await fetch(`${CONTEXT}?keys=family.members,family.groups`);
+    const data = await res.json();
+    members = data["family.members"] ?? [];
+    groups  = data["family.groups"]  ?? [];
+  } catch { members = []; groups = []; }
+}
+
+async function loadSettings() {
+  if (!DB) return;
+  const { rows } = await db(`SELECT key, value FROM settings WHERE key IN ('committee_group_id', 'default_visibility')`);
+  for (const r of rows) {
+    if (r.key === "committee_group_id") settings.committee_group_id = r.value || null;
+    if (r.key === "default_visibility") settings.default_visibility = r.value || "private";
+  }
+}
+
+async function saveSetting(key, value) {
+  await db(
+    `INSERT INTO settings (key, value) VALUES (?, ?)
+     ON CONFLICT (household_id, key) DO UPDATE SET value = excluded.value`,
+    [key, value]
+  );
 }
 
 function demoAgo(days) { return new Date(Date.now() - days * 86400000).toISOString(); }
@@ -241,16 +267,16 @@ function demoAgo(days) { return new Date(Date.now() - days * 86400000).toISOStri
 async function loadRequests() {
   if (!DB) {
     requests = [
-      { id: "d1", title: "Wood privacy fence along east property line", description: "6-foot cedar privacy fence, natural finish, running 120 feet along the east property boundary.", category: "fence",      unit_ref: "Lot 14",  status: "under_review",           submitted_by: "demo-1", decision_note: "",                                             decided_at: null,       decided_by: null,     created_at: demoAgo(7),  updated_at: demoAgo(2) },
-      { id: "d2", title: "Repaint exterior — Sherwin Williams Repose Gray", description: "Full exterior repaint. Current color: beige. Proposed: Repose Gray (SW 7015) with white trim.", category: "paint",      unit_ref: "Unit 4B", status: "approved",               submitted_by: "demo-2", decision_note: "Color is consistent with community palette. Approved for spring season.", decided_at: demoAgo(3), decided_by: "demo-1", created_at: demoAgo(14), updated_at: demoAgo(3) },
-      { id: "d3", title: "Detached garage addition — 20×24 ft", description: "Single-car detached garage, 20×24 sq ft, to match existing exterior materials.", category: "addition",    unit_ref: "Lot 7",   status: "approved_with_conditions", submitted_by: "demo-3", decision_note: "Approved provided the roofline matches the primary structure and setback requirements are met.", decided_at: demoAgo(1), decided_by: "demo-2", created_at: demoAgo(21), updated_at: demoAgo(1) },
-      { id: "d4", title: "Front yard xeriscaping and rock garden", description: "Replace front lawn with drought-tolerant native plants and decorative gravel.", category: "landscaping", unit_ref: "Lot 22",  status: "pending",                submitted_by: "demo-4", decision_note: "",                                             decided_at: null,       decided_by: null,     created_at: demoAgo(1),  updated_at: demoAgo(1) },
-      { id: "d5", title: "12×16 rear deck addition",              description: "Pressure-treated lumber deck off back door, 12×16 ft, with railing.", category: "deck",       unit_ref: "Lot 9",   status: "denied",                 submitted_by: "demo-1", decision_note: "Deck footprint exceeds allowable rear setback. Please resubmit with revised dimensions.", decided_at: demoAgo(5), decided_by: "demo-1", created_at: demoAgo(18), updated_at: demoAgo(5) },
+      { id: "d1", title: "Wood privacy fence along east property line", description: "6-foot cedar privacy fence, natural finish, running 120 feet along the east property boundary.", category: "fence",      unit_ref: "Lot 14",  status: "under_review",           submitted_by: "demo-1", decision_note: "",                                             decided_at: null,       decided_by: null,     created_at: demoAgo(7),  updated_at: demoAgo(2),  visibility: "private" },
+      { id: "d2", title: "Repaint exterior — Sherwin Williams Repose Gray", description: "Full exterior repaint. Current color: beige. Proposed: Repose Gray (SW 7015) with white trim.", category: "paint",      unit_ref: "Unit 4B", status: "approved",               submitted_by: "demo-2", decision_note: "Color is consistent with community palette. Approved for spring season.", decided_at: demoAgo(3), decided_by: "demo-1", created_at: demoAgo(14), updated_at: demoAgo(3),  visibility: "public"  },
+      { id: "d3", title: "Detached garage addition — 20×24 ft", description: "Single-car detached garage, 20×24 sq ft, to match existing exterior materials.", category: "addition",    unit_ref: "Lot 7",   status: "approved_with_conditions", submitted_by: "demo-3", decision_note: "Approved provided the roofline matches the primary structure and setback requirements are met.", decided_at: demoAgo(1), decided_by: "demo-2", created_at: demoAgo(21), updated_at: demoAgo(1),  visibility: "private" },
+      { id: "d4", title: "Front yard xeriscaping and rock garden", description: "Replace front lawn with drought-tolerant native plants and decorative gravel.", category: "landscaping", unit_ref: "Lot 22",  status: "pending",                submitted_by: "demo-4", decision_note: "",                                             decided_at: null,       decided_by: null,     created_at: demoAgo(1),  updated_at: demoAgo(1),  visibility: "private" },
+      { id: "d5", title: "12×16 rear deck addition",              description: "Pressure-treated lumber deck off back door, 12×16 ft, with railing.", category: "deck",       unit_ref: "Lot 9",   status: "denied",                 submitted_by: "demo-1", decision_note: "Deck footprint exceeds allowable rear setback. Please resubmit with revised dimensions.", decided_at: demoAgo(5), decided_by: "demo-1", created_at: demoAgo(18), updated_at: demoAgo(5),  visibility: "private" },
     ];
     return;
   }
   const { rows } = await db(`SELECT * FROM requests ORDER BY created_at DESC`);
-  requests = rows ?? [];
+  requests = (rows ?? []).map(r => ({ ...r, visibility: r.visibility ?? "private" }));
 }
 
 async function loadVotes(requestId) {
@@ -309,6 +335,9 @@ const CAT_ICONS   = { fence: "🚧", paint: "🎨", addition: "🏗️", landsca
 const CATEGORIES  = ["fence", "paint", "addition", "landscaping", "roof", "deck", "driveway", "other"];
 
 function memberName(id) { return members.find(m => m.id === id)?.name ?? "Unknown"; }
+function committeeGroup()   { return _committeeGroup(groups, settings.committee_group_id); }
+function isVoter(m)        { return _isVoter(m, groups, settings.committee_group_id); }
+function canSeeRequest(req){ return _canSeeRequest(req, ME, groups, settings.committee_group_id); }
 function fmtDate(iso) {
   if (!iso) return "";
   return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
@@ -330,10 +359,11 @@ function formatBytes(b) {
 async function submitRequest(fields) {
   const id  = crypto.randomUUID();
   const now = new Date().toISOString();
+  const vis = fields.visibility ?? settings.default_visibility;
   await db(
-    `INSERT INTO requests (id, title, description, category, unit_ref, status, submitted_by, decision_note, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, 'pending', ?, '', ?, ?)`,
-    [id, fields.title, fields.description, fields.category, fields.unit_ref, ME?.id ?? "system", now, now]
+    `INSERT INTO requests (id, title, description, category, unit_ref, status, submitted_by, decision_note, visibility, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, 'pending', ?, '', ?, ?, ?)`,
+    [id, fields.title, fields.description, fields.category, fields.unit_ref, ME?.id ?? "system", vis, now, now]
   );
   await Promise.all([
     notify(`New ARC request: ${fields.title}`, `${ME?.name ?? "Someone"} submitted an ARC request.`),
@@ -439,11 +469,12 @@ async function deleteRequest(id) {
   return true;
 }
 
-async function notify(title, body) {
+async function notify(title, body, audience) {
+  const aud = audience ?? settings.committee_group_id ?? "adults";
   await fetch("/api/notifications/send", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ title, body, url: `/run/${APP_ID}`, audience: "adults" }),
+    body: JSON.stringify({ title, body, url: `/run/${APP_ID}`, audience: aud }),
   }).catch(() => {});
 }
 
@@ -484,6 +515,13 @@ function openSubmitForm() {
         <input id="f-unit" type="text" placeholder="Lot 14, Unit 4B…" />
       </div>
     </div>
+    <div class="form-group">
+      <label>Visibility</label>
+      <select id="f-vis">
+        <option value="private" ${settings.default_visibility === "private" ? "selected" : ""}>🔒 Private — committee only</option>
+        <option value="public"  ${settings.default_visibility === "public"  ? "selected" : ""}>🌐 Public — visible to all members</option>
+      </select>
+    </div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
       <button class="btn btn-primary" onclick="submitForm()">Submit Request</button>
@@ -500,8 +538,9 @@ window.submitForm = async function() {
   try {
     const id = await submitRequest({
       title, description: desc,
-      category: document.getElementById("f-cat").value,
-      unit_ref: document.getElementById("f-unit").value.trim(),
+      category:   document.getElementById("f-cat").value,
+      unit_ref:   document.getElementById("f-unit").value.trim(),
+      visibility: document.getElementById("f-vis").value,
     });
     closeModal();
     detailId = id;
@@ -610,7 +649,7 @@ function renderDetail() {
   const req = requests.find(r => r.id === detailId);
   if (!req) { detailId = null; renderList(); return; }
 
-  const meIsAdmin  = isAdult(ME);
+  const meIsAdmin  = isVoter(ME);
   const catIcon    = CAT_ICONS[req.category]  ?? "📋";
   const catLabel   = CAT_LABELS[req.category] ?? req.category;
   const statColor  = STATUS_COLORS[req.status] ?? "#6b7280";
@@ -623,6 +662,11 @@ function renderDetail() {
   const myVote    = ME ? reqVotes.find(v => v.voter_id === ME.id) : null;
   const tally     = { approve: 0, approve_with_conditions: 0, deny: 0 };
   for (const v of reqVotes) { if (tally[v.vote] !== undefined) tally[v.vote]++; }
+
+  const readOnlyNoteHtml = !meIsAdmin && isActive ? `
+    <div class="card" style="font-size:.85rem;color:var(--muted);text-align:center;padding:12px 16px">
+      This request is under committee review.
+    </div>` : "";
 
   const votePanelHtml = meIsAdmin && isActive ? `
     <div class="card">
@@ -720,6 +764,13 @@ function renderDetail() {
 
     <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
       <span class="badge" style="background:${statColor}">${statLabel}</span>
+      ${req.visibility === "public"
+        ? `<span class="badge badge-outline">🌐 Public</span>`
+        : `<span class="badge badge-outline">🔒 Private</span>`}
+      ${meIsAdmin ? `
+        <button class="btn btn-ghost btn-sm" onclick="toggleVisibility('${esc(req.id)}','${req.visibility === 'public' ? 'private' : 'public'}')">
+          Make ${req.visibility === "public" ? "Private" : "Public"}
+        </button>` : ""}
     </div>
 
     <div class="card">
@@ -728,6 +779,7 @@ function renderDetail() {
 
     ${decisionHtml}
     ${votePanelHtml}
+    ${readOnlyNoteHtml}
 
     <div class="card">
       <div class="section-title">Supporting Documents</div>
@@ -795,19 +847,21 @@ window.postComment = async function() {
 // ─── List view ──────────────────────────────────────────────────────────────
 
 function filteredRequests() {
-  if (filter === "all")      return requests;
-  if (filter === "decided")  return requests.filter(r => ["approved","approved_with_conditions","denied"].includes(r.status));
-  return requests.filter(r => ["pending","under_review"].includes(r.status));
+  const visible = requests.filter(canSeeRequest);
+  if (filter === "all")     return visible;
+  if (filter === "decided") return visible.filter(r => ["approved","approved_with_conditions","denied"].includes(r.status));
+  return visible.filter(r => ["pending","under_review"].includes(r.status));
 }
 
 function renderList() {
   const filtered = filteredRequests();
   const FILTERS  = ["open", "decided", "all"];
   const FL       = { open: "Open", decided: "Decided", all: "All" };
+  const visible  = requests.filter(canSeeRequest);
   const counts   = {
-    open:    requests.filter(r => ["pending","under_review"].includes(r.status)).length,
-    decided: requests.filter(r => ["approved","approved_with_conditions","denied"].includes(r.status)).length,
-    all:     requests.length,
+    open:    visible.filter(r => ["pending","under_review"].includes(r.status)).length,
+    decided: visible.filter(r => ["approved","approved_with_conditions","denied"].includes(r.status)).length,
+    all:     visible.length,
   };
 
   const tabsHtml = FILTERS.map(f => `
@@ -834,16 +888,84 @@ function renderList() {
           </div>`;
       }).join("");
 
+  const cGroup = committeeGroup();
+  const subLine = cGroup ? `Committee: ${esc(cGroup.name)}` : "Architectural Review Committee";
   document.getElementById("root").innerHTML = `
     <header>
-      <div><h1>🏛️ ARC Requests</h1><div class="sub">Architectural Review Committee</div></div>
-      ${ME ? `<button class="btn btn-icon" onclick="openSubmitForm()" title="Submit Request">＋</button>` : ""}
+      <div><h1>🏛️ ARC Requests</h1><div class="sub">${subLine}</div></div>
+      <div style="display:flex;gap:6px">
+        ${isVoter(ME) ? `<button class="btn btn-icon" onclick="openSettingsModal()" title="Settings">⚙️</button>` : ""}
+        ${ME ? `<button class="btn btn-icon" onclick="openSubmitForm()" title="Submit Request">＋</button>` : ""}
+      </div>
     </header>
     <div class="item-tabs">${tabsHtml}</div>
     ${cardsHtml}`;
 }
 
 window.setFilter = f => { filter = f; renderList(); };
+
+// ─── Settings modal ─────────────────────────────────────────────────────────
+
+function openSettingsModal() {
+  const groupOpts = groups.map(g => `
+    <option value="${esc(g.id)}" ${settings.committee_group_id === g.id ? "selected" : ""}>
+      👥 ${esc(g.name)}
+    </option>`).join("");
+
+  openModal(`
+    <h3>⚙️ ARC Settings</h3>
+    <div class="form-group">
+      <label>Committee Group</label>
+      <select id="s-group">
+        <option value="" ${!settings.committee_group_id ? "selected" : ""}>All Adults (default)</option>
+        ${groupOpts}
+      </select>
+      <div style="font-size:.78rem;color:var(--muted);margin-top:4px">
+        Members of the selected group can vote and issue decisions. If no group is selected, all adults can vote.
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Default Request Visibility</label>
+      <select id="s-vis">
+        <option value="private" ${settings.default_visibility === "private" ? "selected" : ""}>🔒 Private — committee only</option>
+        <option value="public"  ${settings.default_visibility === "public"  ? "selected" : ""}>🌐 Public — visible to all members</option>
+      </select>
+      <div style="font-size:.78rem;color:var(--muted);margin-top:4px">
+        Submitters can override this per-request. Committee members can change it after submission.
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveSettings()">Save</button>
+    </div>`);
+}
+
+window.saveSettings = async function() {
+  const groupId = document.getElementById("s-group").value || null;
+  const vis     = document.getElementById("s-vis").value;
+  const btn = modalEl?.querySelector(".modal-actions .btn-primary");
+  if (btn) { btn.disabled = true; btn.textContent = "Saving…"; }
+  try {
+    await Promise.all([
+      saveSetting("committee_group_id", groupId ?? ""),
+      saveSetting("default_visibility", vis),
+    ]);
+    settings.committee_group_id = groupId;
+    settings.default_visibility = vis;
+    closeModal();
+    render();
+  } catch (e) {
+    if (btn) { btn.disabled = false; btn.textContent = "Save"; }
+    throw e;
+  }
+};
+
+window.toggleVisibility = async function(requestId, newVis) {
+  const now = new Date().toISOString();
+  await db(`UPDATE requests SET visibility = ?, updated_at = ? WHERE id = ?`, [newVis, now, requestId]);
+  requests = requests.map(r => r.id === requestId ? { ...r, visibility: newVis } : r);
+  renderDetail();
+};
 
 // ─── Render / init ──────────────────────────────────────────────────────────
 
@@ -857,12 +979,13 @@ function handleDeepLink() {
   if (id && requests.find(r => r.id === id)) openDetail(id);
 }
 
-window.openSubmitForm = openSubmitForm;
-window.closeModal     = closeModal;
+window.openSubmitForm    = openSubmitForm;
+window.openSettingsModal = openSettingsModal;
+window.closeModal        = closeModal;
 
 (async () => {
   await loadMembers();
-  await loadRequests();
+  await Promise.all([loadRequests(), loadSettings()]);
   render();
   handleDeepLink();
 })();
