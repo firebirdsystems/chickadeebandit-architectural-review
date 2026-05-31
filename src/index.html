@@ -443,7 +443,7 @@ async function notify(title, body) {
   await fetch("/api/notifications/send", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ title, body, url: `/run/${APP_ID}` }),
+    body: JSON.stringify({ title, body, url: `/run/${APP_ID}`, audience: "adults" }),
   }).catch(() => {});
 }
 
