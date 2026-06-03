@@ -5,7 +5,7 @@
   "description": "Homeowners submit modification requests for ARC committee review. Committee votes, issues decisions with written rationale, and tracks status to resolution.",
   "entrypoint": "index.html",
   "runtime": "static",
-  "category": "tools",
+  "category": "organization",
   "tags": ["hoa", "arc", "architectural", "review", "modifications", "approval"],
   "data_access": {
     "reads": ["family.members", "family.groups"],
