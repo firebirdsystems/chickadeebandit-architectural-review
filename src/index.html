@@ -454,16 +454,16 @@ async function deleteDoc(docId, fileKey) {
 
 async function deleteRequest(id) {
   if (!await hubConfirm({ message: "Delete this request?", description: "All votes, comments, and documents will also be removed.", confirmLabel: "Delete", destructive: true })) return false;
-  await db(`DELETE FROM requests WHERE id = ?`, [id]);
-  await db(`DELETE FROM votes WHERE request_id = ?`, [id]);
-  await db(`DELETE FROM comments WHERE request_id = ?`, [id]);
-  if (DOCS) {
-    const docList = docs[id] ?? [];
-    for (const d of docList) {
-      await fetch(`${DOCS}/${d.id}`, { method: "DELETE" });
-      if (d.fileKey) await files.delete(d.fileKey).catch(() => {});
-    }
-  }
+  const docList = DOCS ? (docs[id] ?? []) : [];
+  await Promise.all([
+    db(`DELETE FROM requests WHERE id = ?`, [id]),
+    db(`DELETE FROM votes WHERE request_id = ?`, [id]),
+    db(`DELETE FROM comments WHERE request_id = ?`, [id]),
+    ...docList.map(d => Promise.all([
+      fetch(`${DOCS}/${d.id}`, { method: "DELETE" }),
+      d.fileKey ? files.delete(d.fileKey).catch(() => {}) : Promise.resolve(),
+    ])),
+  ]);
   requests = requests.filter(r => r.id !== id);
   delete votes[id]; delete comments[id]; delete docs[id];
   return true;
@@ -984,8 +984,7 @@ window.openSettingsModal = openSettingsModal;
 window.closeModal        = closeModal;
 
 (async () => {
-  await loadMembers();
-  await Promise.all([loadRequests(), loadSettings()]);
+  await Promise.all([loadMembers(), loadRequests(), loadSettings()]);
   render();
   handleDeepLink();
 })();
