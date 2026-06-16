@@ -250,7 +250,7 @@ async function loadMembers() {
 
 async function loadSettings() {
   if (!DB) return;
-  const { rows } = await db(`SELECT key, value FROM settings WHERE key IN ('committee_group_id', 'default_visibility')`);
+  const { rows } = await db(`SELECT key, value FROM app_architectural_review__settings WHERE key IN ('committee_group_id', 'default_visibility')`);
   for (const r of rows) {
     if (r.key === "committee_group_id") settings.committee_group_id = r.value || null;
     if (r.key === "default_visibility") settings.default_visibility = r.value || "private";
@@ -259,8 +259,8 @@ async function loadSettings() {
 
 async function saveSetting(key, value) {
   await db(
-    `INSERT INTO settings (key, value) VALUES (?, ?)
-     ON CONFLICT (household_id, key) DO UPDATE SET value = excluded.value`,
+    `INSERT INTO app_architectural_review__settings (key, value) VALUES (?, ?)
+     ON CONFLICT (key) DO UPDATE SET value = excluded.value`,
     [key, value]
   );
 }
@@ -278,7 +278,7 @@ async function loadRequests() {
     ];
     return;
   }
-  const { rows } = await db(`SELECT * FROM requests ORDER BY created_at DESC`);
+  const { rows } = await db(`SELECT * FROM app_architectural_review__requests ORDER BY created_at DESC`);
   requests = (rows ?? []).map(r => ({ ...r, visibility: r.visibility ?? "private" }));
 }
 
@@ -293,7 +293,7 @@ async function loadVotes(requestId) {
     return;
   }
   const { rows } = await db(
-    `SELECT * FROM votes WHERE request_id = ? ORDER BY created_at`,
+    `SELECT * FROM app_architectural_review__votes WHERE request_id = ? ORDER BY created_at`,
     [requestId]
   );
   votes[requestId] = rows ?? [];
@@ -302,7 +302,7 @@ async function loadVotes(requestId) {
 async function loadComments(requestId) {
   if (!DB) { comments[requestId] = []; return; }
   const { rows } = await db(
-    `SELECT * FROM comments WHERE request_id = ? ORDER BY created_at`,
+    `SELECT * FROM app_architectural_review__comments WHERE request_id = ? ORDER BY created_at`,
     [requestId]
   );
   comments[requestId] = rows ?? [];
@@ -364,7 +364,7 @@ async function submitRequest(fields) {
   const now = new Date().toISOString();
   const vis = fields.visibility ?? settings.default_visibility;
   await db(
-    `INSERT INTO requests (id, title, description, category, unit_ref, status, submitted_by, decision_note, visibility, created_at, updated_at)
+    `INSERT INTO app_architectural_review__requests (id, title, description, category, unit_ref, status, submitted_by, decision_note, visibility, created_at, updated_at)
      VALUES (?, ?, ?, ?, ?, 'pending', ?, '', ?, ?, ?)`,
     [id, fields.title, fields.description, fields.category, fields.unit_ref, ME?.id ?? "system", vis, now, now]
   );
@@ -386,10 +386,10 @@ function castVote(requestId, voteValue, notes) {
   if (movesToReview) requests = requests.map(r => r.id === requestId ? { ...r, status: "under_review" } : r);
   (async () => {
     try {
-      await db(`DELETE FROM votes WHERE request_id = ? AND voter_id = ?`, [requestId, ME.id]);
-      await db(`INSERT INTO votes (id, request_id, voter_id, vote, notes, created_at) VALUES (?, ?, ?, ?, ?, ?)`,
+      await db(`DELETE FROM app_architectural_review__votes WHERE request_id = ? AND voter_id = ?`, [requestId, ME.id]);
+      await db(`INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, notes, created_at) VALUES (?, ?, ?, ?, ?, ?)`,
         [id, requestId, ME.id, voteValue, notes, now]);
-      if (movesToReview) await db(`UPDATE requests SET status = 'under_review', updated_at = ? WHERE id = ?`, [now, requestId]);
+      if (movesToReview) await db(`UPDATE app_architectural_review__requests SET status = 'under_review', updated_at = ? WHERE id = ?`, [now, requestId]);
     } catch {}
   })();
 }
@@ -400,7 +400,7 @@ function issueDecision(requestId, decision, rationale) {
   requests = requests.map(r =>
     r.id === requestId ? { ...r, status: decision, decision_note: rationale, decided_at: now, decided_by: ME.id } : r
   );
-  db(`UPDATE requests SET status = ?, decision_note = ?, decided_at = ?, decided_by = ?, updated_at = ? WHERE id = ?`,
+  db(`UPDATE app_architectural_review__requests SET status = ?, decision_note = ?, decided_at = ?, decided_by = ?, updated_at = ? WHERE id = ?`,
     [decision, rationale, now, ME.id, now, requestId]).catch(() => {});
 }
 
@@ -408,7 +408,7 @@ async function addComment(requestId, body) {
   const id  = crypto.randomUUID();
   const now = new Date().toISOString();
   await db(
-    `INSERT INTO comments (id, request_id, author_id, body, created_at) VALUES (?, ?, ?, ?, ?)`,
+    `INSERT INTO app_architectural_review__comments (id, request_id, author_id, body, created_at) VALUES (?, ?, ?, ?, ?)`,
     [id, requestId, ME?.id ?? "system", body, now]
   );
   if (!comments[requestId]) comments[requestId] = [];
@@ -458,9 +458,9 @@ async function deleteRequest(id) {
   if (!await hubConfirm({ message: "Delete this request?", description: "All votes, comments, and documents will also be removed.", confirmLabel: "Delete", destructive: true })) return false;
   const docList = DOCS ? (docs[id] ?? []) : [];
   await Promise.all([
-    db(`DELETE FROM requests WHERE id = ?`, [id]),
-    db(`DELETE FROM votes WHERE request_id = ?`, [id]),
-    db(`DELETE FROM comments WHERE request_id = ?`, [id]),
+    db(`DELETE FROM app_architectural_review__requests WHERE id = ?`, [id]),
+    db(`DELETE FROM app_architectural_review__votes WHERE request_id = ?`, [id]),
+    db(`DELETE FROM app_architectural_review__comments WHERE request_id = ?`, [id]),
     ...docList.map(d => Promise.all([
       fetch(`${DOCS}/${d.id}`, { method: "DELETE" }),
       d.fileKey ? files.delete(d.fileKey).catch(() => {}) : Promise.resolve(),
@@ -947,7 +947,7 @@ window.saveSettings = async function() {
 
 window.toggleVisibility = async function(requestId, newVis) {
   const now = new Date().toISOString();
-  await db(`UPDATE requests SET visibility = ?, updated_at = ? WHERE id = ?`, [newVis, now, requestId]);
+  await db(`UPDATE app_architectural_review__requests SET visibility = ?, updated_at = ? WHERE id = ?`, [newVis, now, requestId]);
   requests = requests.map(r => r.id === requestId ? { ...r, visibility: newVis } : r);
   renderDetail();
 };
