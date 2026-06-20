@@ -473,7 +473,7 @@ async function deleteRequest(id) {
 
 async function notify(title, body, audience) {
   const aud = audience ?? settings.committee_group_id ?? "adults";
-  await fetch("/api/notifications/send", {
+  await fetch(window.__NOTIFY_URL ?? "/api/notifications/send", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ title, body, url: `/run/${APP_ID}`, audience: aud }),
