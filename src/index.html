@@ -211,6 +211,7 @@ let memberMap = new Map();
 let groups   = [];
 let settings = { committee_group_id: null, default_visibility: "private" };
 let requests = [];
+let decisionMap = new Map();
 let votes    = {};
 let comments = {};
 let docs     = {};
@@ -280,6 +281,23 @@ async function loadRequests() {
   }
   const { rows } = await db(`SELECT * FROM app_architectural_review__requests ORDER BY created_at DESC`);
   requests = (rows ?? []).map(r => ({ ...r, visibility: r.visibility ?? "private" }));
+}
+
+// Committee decisions live in a committee-only child table. Load them into a map
+// keyed by request_id; applyDecisions() overlays the effective status/rationale/
+// decider onto each request so the rest of the UI keeps reading r.status etc.
+async function loadDecisions() {
+  if (!DB) { decisionMap = new Map(); return; }
+  const { rows } = await db(`SELECT request_id, status, rationale, decided_by, decided_at FROM app_architectural_review__decisions`);
+  decisionMap = new Map((rows ?? []).map(d => [d.request_id, d]));
+}
+
+function applyDecisions() {
+  requests = requests.map(r => {
+    const d = decisionMap.get(r.id);
+    if (!d) return r;
+    return { ...r, status: d.status, decision_note: d.rationale, decided_by: d.decided_by, decided_at: d.decided_at };
+  });
 }
 
 async function loadVotes(requestId) {
@@ -397,11 +415,13 @@ function castVote(requestId, voteValue, notes) {
 function issueDecision(requestId, decision, rationale) {
   if (!ME) return;
   const now = new Date().toISOString();
-  requests = requests.map(r =>
-    r.id === requestId ? { ...r, status: decision, decision_note: rationale, decided_at: now, decided_by: ME.id } : r
-  );
-  db(`UPDATE app_architectural_review__requests SET status = ?, decision_note = ?, decided_at = ?, decided_by = ?, updated_at = ? WHERE id = ?`,
-    [decision, rationale, now, ME.id, now, requestId]).catch(() => {});
+  // Decisions are written to the committee-only `decisions` table
+  // (insert_privileged_only via the committee group). A homeowner cannot record a
+  // decision on their own request because they are not in the committee group.
+  decisionMap.set(requestId, { request_id: requestId, status: decision, rationale, decided_by: ME.id, decided_at: now });
+  render();
+  db(`INSERT OR REPLACE INTO app_architectural_review__decisions (request_id, status, rationale, decided_by, decided_at) VALUES (?, ?, ?, ?, ?)`,
+    [requestId, decision, rationale, ME.id, now]).catch(() => {});
 }
 
 async function addComment(requestId, body) {
@@ -461,6 +481,7 @@ async function deleteRequest(id) {
     db(`DELETE FROM app_architectural_review__requests WHERE id = ?`, [id]),
     db(`DELETE FROM app_architectural_review__votes WHERE request_id = ?`, [id]),
     db(`DELETE FROM app_architectural_review__comments WHERE request_id = ?`, [id]),
+    db(`DELETE FROM app_architectural_review__decisions WHERE request_id = ?`, [id]),
     ...docList.map(d => Promise.all([
       fetch(`${DOCS}/${d.id}`, { method: "DELETE" }),
       d.fileKey ? files.delete(d.fileKey).catch(() => {}) : Promise.resolve(),
@@ -906,7 +927,8 @@ function openSettingsModal() {
         ${groupOpts}
       </select>
       <div style="font-size:.78rem;color:var(--muted);margin-top:4px">
-        Members of the selected group can vote and issue decisions. If no group is selected, all adults can vote.
+        Members of the selected group can vote and issue decisions.
+        ${!settings.committee_group_id ? `<span style="color:var(--amber)">⚠️ Select a committee group to enable voting and decisions — they are disabled until one is set.</span>` : ""}
       </div>
     </div>
     <div class="form-group">
@@ -955,6 +977,7 @@ window.toggleVisibility = async function(requestId, newVis) {
 // ─── Render / init ──────────────────────────────────────────────────────────
 
 function render() {
+  applyDecisions();
   if (detailId) renderDetail();
   else renderList();
 }
@@ -969,7 +992,7 @@ window.openSettingsModal = openSettingsModal;
 window.closeModal        = closeModal;
 
 (async () => {
-  await Promise.all([loadMembers(), loadRequests(), loadSettings()]);
+  await Promise.all([loadMembers(), loadRequests(), loadDecisions(), loadSettings()]);
   render();
   handleDeepLink();
 })();

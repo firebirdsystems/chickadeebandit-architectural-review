@@ -30,13 +30,24 @@
       "kind": "inherit_visibility",
       "fk_column": "request_id",
       "parent_table": "requests",
-      "writer_column": "voter_id"
+      "writer_column": "voter_id",
+      "insert_privileged_only": true
     },
     "comments": {
       "kind": "inherit_visibility",
       "fk_column": "request_id",
       "parent_table": "requests",
       "writer_column": "author_id"
+    },
+    "decisions": {
+      "kind": "inherit_visibility",
+      "fk_column": "request_id",
+      "parent_table": "requests",
+      "writer_column": "decided_by",
+      "insert_privileged_only": true
+    },
+    "settings": {
+      "kind": "adult_only"
     }
   },
   "nav": {
