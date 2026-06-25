@@ -47,8 +47,18 @@
       "insert_privileged_only": true
     },
     "settings": {
-      "kind": "adult_only"
+      "kind": "app_config"
     }
+  },
+  "admin_config": {
+    "settings_table": "settings",
+    "keys": ["committee_group_id", "default_visibility"]
+  },
+  "file_acls": {
+    "write": { "require_role": "adult" }
+  },
+  "document_acls": {
+    "write": { "require_role": "adult" }
   },
   "nav": {
     "label": "ARC Requests"
