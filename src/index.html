@@ -891,7 +891,7 @@ function renderList() {
     ? `<div class="empty">No ${filter !== "all" ? FL[filter].toLowerCase() + " " : ""}requests.</div>`
     : filtered.map(req => {
         return `
-          <div class="req-card" onclick="openDetail('${req.id}')">
+          <div class="req-card" onclick="openDetail('${esc(req.id)}')">
             <div class="req-top">
               <span class="req-icon">${CAT_ICONS[req.category] ?? "📋"}</span>
               <div class="req-title-wrap">
