@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { committeeGroup, isVoter, canSeeRequest, isAdult } from "../src/logic.js";
+import { testPrivilegedGateContract } from "./helpers/privileged-gate.mjs";
 
 const GROUPS = [
   { id: "g-arc",  name: "ARC Committee", memberIds: ["m-alice", "m-bob"] },
@@ -29,42 +30,28 @@ describe("committeeGroup", () => {
 });
 
 // ── isVoter ───────────────────────────────────────────────────────────────────
+// isVoter fronts the `votes` / `decisions` insert_privileged_only policies (and
+// the `requests` privileged_values SELECT grant), so it must satisfy the shared
+// privileged-gate contract (mirrors the hub: no adult fallback when no committee
+// group is configured).
 
-describe("isVoter — no committee group (all adults)", () => {
-  it("returns false for null member", () => {
-    expect(isVoter(null, GROUPS, null)).toBe(false);
-  });
-
-  it("returns true for an adult", () => {
-    expect(isVoter(ALICE, GROUPS, null)).toBe(true);
-  });
-
-  it("returns false for a child", () => {
-    expect(isVoter(CHARLIE, GROUPS, null)).toBe(false);
-  });
+testPrivilegedGateContract("isVoter", isVoter, {
+  member:   ALICE, // adult in g-arc
+  outsider: DANA,  // adult not in g-arc
+  groups:   GROUPS,
+  groupId:  "g-arc",
 });
 
-describe("isVoter — committee group configured", () => {
-  it("returns true for a member in the committee group", () => {
-    expect(isVoter(ALICE, GROUPS, "g-arc")).toBe(true);
-    expect(isVoter(BOB,   GROUPS, "g-arc")).toBe(true);
+describe("isVoter — app-specific", () => {
+  it("returns true for a second member in the committee group", () => {
+    expect(isVoter(BOB, GROUPS, "g-arc")).toBe(true);
   });
 
-  it("returns false for an adult NOT in the committee group", () => {
-    expect(isVoter(DANA, GROUPS, "g-arc")).toBe(false);
-  });
-
+  // Unlike amenity-reservations' isBoard, the committee gate does not require
+  // adulthood — a child placed in the committee group is a voter (matching the
+  // hub, which checks group membership only).
   it("returns true for a child who IS in the committee group", () => {
     expect(isVoter(CHARLIE, GROUPS, "g-kids")).toBe(true);
-  });
-
-  it("returns false for null member even with group configured", () => {
-    expect(isVoter(null, GROUPS, "g-arc")).toBe(false);
-  });
-
-  it("falls back to isAdult when the configured group id no longer exists", () => {
-    expect(isVoter(ALICE, GROUPS, "g-deleted")).toBe(true);
-    expect(isVoter(CHARLIE, GROUPS, "g-deleted")).toBe(false);
   });
 });
 
@@ -75,8 +62,15 @@ const publicReq  = { id: "r2", submitted_by: "m-dana",  visibility: "public"  };
 const aliceReq   = { id: "r3", submitted_by: "m-alice", visibility: "private" };
 
 describe("canSeeRequest — no committee group", () => {
-  it("adult (voter) sees any private request", () => {
-    expect(canSeeRequest(privateReq, ALICE, GROUPS, null)).toBe(true);
+  it("adult cannot see someone else's private request (no committee → not a voter)", () => {
+    // privateReq is Dana's; with no committee Alice is not a voter, so she only
+    // sees her own + public — matching the hub's SELECT filter.
+    expect(canSeeRequest(privateReq, ALICE, GROUPS, null)).toBe(false);
+  });
+
+  it("adult sees their own private request", () => {
+    const ownReq = { ...privateReq, submitted_by: "m-alice" };
+    expect(canSeeRequest(ownReq, ALICE, GROUPS, null)).toBe(true);
   });
 
   it("child (non-voter) sees their own private request", () => {

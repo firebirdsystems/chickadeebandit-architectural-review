@@ -522,6 +522,9 @@ function openModal(html) {
   modalEl.innerHTML = `<div class="modal">${html}</div>`;
   modalEl.addEventListener("click", e => { if (e.target === modalEl) closeModal(); });
   document.body.appendChild(modalEl);
+  // Programmatic focus works inside cross-origin iframes (unlike the autofocus
+  // attribute, which the browser blocks) because it rides the user's click gesture.
+  modalEl.querySelector("[data-autofocus]")?.focus();
 }
 function closeModal() { modalEl?.remove(); modalEl = null; }
 
@@ -532,7 +535,7 @@ function openSubmitForm() {
     <h3>🏛️ Submit ARC Request</h3>
     <div class="form-group">
       <label>Title</label>
-      <input id="f-title" type="text" placeholder="6-foot cedar privacy fence, Exterior paint change…" autofocus />
+      <input id="f-title" type="text" placeholder="6-foot cedar privacy fence, Exterior paint change…" data-autofocus />
     </div>
     <div class="form-group">
       <label>Description</label>
@@ -912,7 +915,7 @@ function renderList() {
     <header>
       <div><h1>🏛️ ARC Requests</h1><div class="sub">${subLine}</div></div>
       <div style="display:flex;gap:6px">
-        ${isVoter(ME) ? `<button class="btn btn-icon" onclick="openSettingsModal()" title="Settings">⚙️</button>` : ""}
+        ${(isVoter(ME) || ME?.isAdmin) ? `<button class="btn btn-icon" onclick="openSettingsModal()" title="Settings">⚙️</button>` : ""}
         ${ME ? `<button class="btn btn-icon" onclick="openSubmitForm()" title="Submit Request">＋</button>` : ""}
       </div>
     </header>
@@ -935,7 +938,7 @@ function openSettingsModal() {
     <div class="form-group">
       <label>Committee Group</label>
       <select id="s-group" ${!isAdmin ? "disabled" : ""}>
-        <option value="" ${!settings.committee_group_id ? "selected" : ""}>All Adults (default)</option>
+        <option value="" ${!settings.committee_group_id ? "selected" : ""}>— No committee configured —</option>
         ${groupOpts}
       </select>
       <div style="font-size:.78rem;color:var(--muted);margin-top:4px">
@@ -956,7 +959,7 @@ function openSettingsModal() {
     <p style="font-size:.85rem;color:var(--muted);margin-bottom:14px">
       Committee group: <strong>${settings.committee_group_id
         ? (committeeGroup()?.name ?? settings.committee_group_id)
-        : "All Adults (default)"}</strong><br/>
+        : "Not configured"}</strong><br/>
       Default visibility: <strong>${settings.default_visibility === "public" ? "🌐 Public" : "🔒 Private"}</strong>
     </p>
     <p style="font-size:.8rem;color:var(--muted)">Only a hub admin can change these settings.</p>`;

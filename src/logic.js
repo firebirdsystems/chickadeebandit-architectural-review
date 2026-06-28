@@ -15,7 +15,15 @@ export function committeeGroup(groups, committeeGroupId) {
 
 /**
  * Returns true if the given member may vote and issue decisions.
- * When no committee group is configured, all adults are voters.
+ *
+ * This MUST mirror the hub's server-side privileged check for the
+ * `votes`/`decisions` row policies (`insert_privileged_only`) and the
+ * `requests` policy's `privileged_values` SELECT grant: a member is a voter iff
+ * a committee group is configured AND that group still exists AND the member
+ * belongs to it. There is deliberately NO "all adults" fallback when no group
+ * is set — the hub rejects every privileged INSERT (and withholds private-row
+ * reads) in that case, so treating adults as voters would only produce 403s and
+ * empty results. An admin must appoint a committee group first.
  *
  * @param {object|null} member
  * @param {Array}  groups
@@ -24,8 +32,7 @@ export function committeeGroup(groups, committeeGroupId) {
 export function isVoter(member, groups, committeeGroupId) {
   if (!member) return false;
   const g = committeeGroup(groups, committeeGroupId);
-  if (g) return g.memberIds.includes(member.id);
-  return isAdult(member);
+  return !!g && g.memberIds.includes(member.id);
 }
 
 /**
