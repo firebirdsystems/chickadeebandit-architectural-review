@@ -55,7 +55,9 @@
     "keys": ["committee_group_id", "default_visibility"]
   },
   "file_acls": {
-    "write": { "require_role": "adult" }
+    "write": {
+      "require_group_setting": { "settings_table": "settings", "settings_key": "committee_group_id" }
+    }
   },
   "document_acls": {
     "write": { "require_role": "adult" }
