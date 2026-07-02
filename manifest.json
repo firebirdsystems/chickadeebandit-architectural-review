@@ -31,20 +31,23 @@
       "fk_column": "request_id",
       "parent_table": "requests",
       "writer_column": "voter_id",
-      "insert_privileged_only": true
+      "insert_privileged_only": true,
+      "endpoint_writes_only": true
     },
     "comments": {
       "kind": "inherit_visibility",
       "fk_column": "request_id",
       "parent_table": "requests",
-      "writer_column": "author_id"
+      "writer_column": "author_id",
+      "endpoint_writes_only": true
     },
     "decisions": {
       "kind": "inherit_visibility",
       "fk_column": "request_id",
       "parent_table": "requests",
       "writer_column": "decided_by",
-      "insert_privileged_only": true
+      "insert_privileged_only": true,
+      "endpoint_writes_only": true
     },
     "settings": {
       "kind": "app_config"
@@ -53,6 +56,64 @@
   "admin_config": {
     "settings_table": "settings",
     "keys": ["committee_group_id", "default_visibility"]
+  },
+  "append_only_records": {
+    "votes": {
+      "table": "votes",
+      "parent_table": "requests",
+      "parent_fk_column": "request_id",
+      "parent_status_column": "status",
+      "parent_blocked_status_values": ["approved", "approved_with_conditions", "denied"],
+      "allowed_columns": ["request_id", "vote", "notes"],
+      "writer_column": "voter_id",
+      "created_at_column": "created_at",
+      "write_acl": {
+        "require_group_setting": { "settings_table": "settings", "settings_key": "committee_group_id" }
+      },
+      "allowed_values": {
+        "vote": ["approve", "approve_with_conditions", "deny"]
+      },
+      "max_text_lengths": {
+        "request_id": 120,
+        "vote": 40,
+        "notes": 2000
+      }
+    },
+    "comments": {
+      "table": "comments",
+      "parent_table": "requests",
+      "parent_fk_column": "request_id",
+      "parent_status_column": "status",
+      "parent_blocked_status_values": [],
+      "allowed_columns": ["request_id", "body"],
+      "writer_column": "author_id",
+      "created_at_column": "created_at",
+      "max_text_lengths": {
+        "request_id": 120,
+        "body": 2000
+      }
+    },
+    "decisions": {
+      "table": "decisions",
+      "parent_table": "requests",
+      "parent_fk_column": "request_id",
+      "parent_status_column": "status",
+      "parent_blocked_status_values": [],
+      "allowed_columns": ["request_id", "status", "rationale"],
+      "writer_column": "decided_by",
+      "created_at_column": "decided_at",
+      "write_acl": {
+        "require_group_setting": { "settings_table": "settings", "settings_key": "committee_group_id" }
+      },
+      "allowed_values": {
+        "status": ["approved", "approved_with_conditions", "denied"]
+      },
+      "max_text_lengths": {
+        "request_id": 120,
+        "status": 40,
+        "rationale": 4000
+      }
+    }
   },
   "file_acls": {
     "write": {

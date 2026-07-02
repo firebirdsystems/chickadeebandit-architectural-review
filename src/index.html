@@ -203,6 +203,7 @@ const CONTEXT          = window.__CONTEXT_URL      ?? "";
 const DB               = window.__DB_URL           ?? "";
 const DOCS             = window.__DOCS_URL         ?? "";
 const ADMIN_CONFIG_URL = window.__ADMIN_CONFIG_URL ?? "";
+const APPEND_RECORD    = window.__APPEND_RECORD_URL ?? `/run/${window.__APP_ID ?? "architectural-review"}/api/append-record`;
 const ME      = window.__CURRENT_MEMBER ?? null;
 const APP_ID  = window.__APP_ID ?? "architectural-review";
 const files   = createFilesHelper(window.__FILES_URL ?? "");
@@ -228,6 +229,17 @@ async function db(sql, params = []) {
     body: JSON.stringify({ sql, params }),
   });
   return res.json();
+}
+
+async function appendRecord(name, data) {
+  const res = await fetch(`${APPEND_RECORD}/${encodeURIComponent(name)}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok || json.error) throw new Error(json.error || "Append failed");
+  return json;
 }
 
 async function loadMembers() {
@@ -293,7 +305,7 @@ async function loadRequests() {
 // decider onto each request so the rest of the UI keeps reading r.status etc.
 async function loadDecisions() {
   if (!DB) { decisionMap = new Map(); return; }
-  const { rows } = await db(`SELECT request_id, status, rationale, decided_by, decided_at FROM app_architectural_review__decisions`);
+  const { rows } = await db(`SELECT request_id, status, rationale, decided_by, decided_at FROM app_architectural_review__decisions ORDER BY decided_at ASC`);
   decisionMap = new Map((rows ?? []).map(d => [d.request_id, d]));
 }
 
@@ -326,7 +338,9 @@ async function loadVotes(requestId) {
     `SELECT * FROM app_architectural_review__votes WHERE request_id = ? ORDER BY created_at`,
     [requestId]
   );
-  votes[requestId] = rows ?? [];
+  const latestByVoter = new Map();
+  for (const row of rows ?? []) latestByVoter.set(row.voter_id, row);
+  votes[requestId] = [...latestByVoter.values()];
 }
 
 async function loadComments(requestId) {
@@ -416,9 +430,9 @@ function castVote(requestId, voteValue, notes) {
   if (movesToReview) requests = requests.map(r => r.id === requestId ? { ...r, status: "under_review" } : r);
   (async () => {
     try {
-      await db(`DELETE FROM app_architectural_review__votes WHERE request_id = ? AND voter_id = ?`, [requestId, ME.id]);
-      await db(`INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, notes, created_at) VALUES (?, ?, ?, ?, ?, ?)`,
-        [id, requestId, ME.id, voteValue, notes, now]);
+      const result = await appendRecord("votes", { request_id: requestId, vote: voteValue, notes });
+      votes[requestId] = (votes[requestId] ?? []).filter(v => v.voter_id !== ME.id);
+      votes[requestId] = [...votes[requestId], { id: result.id ?? id, request_id: requestId, voter_id: ME.id, vote: voteValue, notes, created_at: result.created_at ?? now }];
       if (movesToReview) await db(`UPDATE app_architectural_review__requests SET status = 'under_review', updated_at = ? WHERE id = ?`, [now, requestId]);
     } catch {}
   })();
@@ -432,21 +446,16 @@ function issueDecision(requestId, decision, rationale) {
   // decision on their own request because they are not in the committee group.
   decisionMap.set(requestId, { request_id: requestId, status: decision, rationale, decided_by: ME.id, decided_at: now });
   render();
-  db(`INSERT OR REPLACE INTO app_architectural_review__decisions (request_id, status, rationale, decided_by, decided_at) VALUES (?, ?, ?, ?, ?)`,
-    [requestId, decision, rationale, ME.id, now]).catch(() => {});
+  appendRecord("decisions", { request_id: requestId, status: decision, rationale }).catch(() => {});
 }
 
 async function addComment(requestId, body) {
-  const id  = crypto.randomUUID();
   const now = new Date().toISOString();
-  await db(
-    `INSERT INTO app_architectural_review__comments (id, request_id, author_id, body, created_at) VALUES (?, ?, ?, ?, ?)`,
-    [id, requestId, ME?.id ?? "system", body, now]
-  );
+  const result = await appendRecord("comments", { request_id: requestId, body });
   if (!comments[requestId]) comments[requestId] = [];
   comments[requestId] = [
     ...comments[requestId],
-    { id, request_id: requestId, author_id: ME?.id ?? "system", body, created_at: now },
+    { id: result.id, request_id: requestId, author_id: ME?.id ?? "system", body, created_at: result.created_at ?? now },
   ];
 }
 
@@ -491,9 +500,6 @@ async function deleteRequest(id) {
   const docList = DOCS ? (docs[id] ?? []) : [];
   await Promise.all([
     db(`DELETE FROM app_architectural_review__requests WHERE id = ?`, [id]),
-    db(`DELETE FROM app_architectural_review__votes WHERE request_id = ?`, [id]),
-    db(`DELETE FROM app_architectural_review__comments WHERE request_id = ?`, [id]),
-    db(`DELETE FROM app_architectural_review__decisions WHERE request_id = ?`, [id]),
     ...docList.map(d => Promise.all([
       fetch(`${DOCS}/${d.id}`, { method: "DELETE" }),
       d.fileKey ? files.delete(d.fileKey).catch(() => {}) : Promise.resolve(),

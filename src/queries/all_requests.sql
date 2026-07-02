@@ -20,5 +20,10 @@ SELECT
 FROM app_architectural_review__requests r
 LEFT JOIN app_architectural_review__decisions d
   ON d.request_id = r.id
+ AND d.decided_at = (
+   SELECT MAX(d2.decided_at)
+   FROM app_architectural_review__decisions d2
+   WHERE d2.request_id = r.id
+ )
 ORDER BY r.created_at DESC
 LIMIT 200

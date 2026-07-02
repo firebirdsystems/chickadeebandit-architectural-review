@@ -5,14 +5,18 @@
 -- `status` is plaintext (it's in the encryption skip-list); `rationale` mirrors the
 -- old decision_note and is encrypted at rest / decrypted on read.
 CREATE TABLE IF NOT EXISTS app_architectural_review__decisions (
-  request_id  TEXT NOT NULL PRIMARY KEY,
+  id          TEXT NOT NULL PRIMARY KEY,
+  request_id  TEXT NOT NULL,
   status      TEXT NOT NULL,
   rationale   TEXT NOT NULL DEFAULT '',
   decided_by  TEXT NOT NULL,
   decided_at  TEXT NOT NULL
 );
 
-INSERT OR IGNORE INTO app_architectural_review__decisions (request_id, status, rationale, decided_by, decided_at)
-  SELECT id, status, decision_note, COALESCE(decided_by, submitted_by), COALESCE(decided_at, updated_at)
+CREATE INDEX IF NOT EXISTS idx_arc_decisions_request
+  ON app_architectural_review__decisions (request_id, decided_at);
+
+INSERT OR IGNORE INTO app_architectural_review__decisions (id, request_id, status, rationale, decided_by, decided_at)
+  SELECT id, id, status, decision_note, COALESCE(decided_by, submitted_by), COALESCE(decided_at, updated_at)
   FROM app_architectural_review__requests
   WHERE status IN ('approved', 'approved_with_conditions', 'denied');
