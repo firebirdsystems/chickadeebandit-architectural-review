@@ -22,7 +22,7 @@
       "member_column": "submitted_by",
       "visibility_column": "visibility",
       "everyone_values": ["public"],
-      "bypass_group_setting": { "settings_table": "settings", "settings_key": "committee_group_id" },
+      "privileged_groups": [{ "settings_table": "settings", "settings_key": "committee_group_id" }],
       "privileged_values": ["private"],
       "write_owner_only": true
     },
