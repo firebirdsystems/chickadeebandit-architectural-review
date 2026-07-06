@@ -197,6 +197,7 @@ import {
   committeeGroup as _committeeGroup,
   isVoter       as _isVoter,
   canSeeRequest  as _canSeeRequest,
+  DECISION_STATUSES,
 } from "./logic.js";
 
 const CONTEXT          = window.__CONTEXT_URL      ?? "";
@@ -297,7 +298,7 @@ async function loadRequests() {
     return;
   }
   const { rows } = await db(`SELECT * FROM app_architectural_review__requests ORDER BY created_at DESC`);
-  requests = (rows ?? []).map(r => ({ ...r, visibility: r.visibility ?? "private" }));
+  requests = rows ?? []; // visibility has NOT NULL DEFAULT 'private' in the schema
 }
 
 // Committee decisions live in a committee-only child table. Load them into a map
@@ -310,14 +311,13 @@ async function loadDecisions() {
 }
 
 function applyDecisions() {
-  const DECIDED = ["approved", "approved_with_conditions", "denied"];
   requests = requests.map(r => {
     const d = decisionMap.get(r.id);
     if (!d) {
       // If requests.status claims a terminal value but no decisions record
       // exists, a submitter self-wrote it via direct SQL. Reset to under_review
       // so the false approval is not surfaced in the UI or AI exports.
-      const status = DECIDED.includes(r.status) ? "under_review" : r.status;
+      const status = DECISION_STATUSES.includes(r.status) ? "under_review" : r.status;
       return { ...r, status };
     }
     return { ...r, status: d.status, decision_note: d.rationale, decided_by: d.decided_by, decided_at: d.decided_at };
@@ -381,13 +381,25 @@ const CAT_LABELS  = { fence: "Fence", paint: "Paint/Color", addition: "Addition"
 const CAT_ICONS   = { fence: "🚧", paint: "🎨", addition: "🏗️", landscaping: "🌿", roof: "🏠", deck: "🪵", driveway: "🚗", other: "📋" };
 const CATEGORIES  = ["fence", "paint", "addition", "landscaping", "roof", "deck", "driveway", "other"];
 
+// Escape a value for use inside a single-quoted JS string that is itself inside
+// a double-quoted HTML attribute — e.g. onclick="openDetail('${jsAttr(id)}')".
+// esc() alone is NOT safe here: the browser entity-decodes the attribute before
+// evaluating it as JS, so an id like `'); doEvil()//` survives esc() and runs.
+// Any household member can INSERT a request with an attacker-chosen id via raw
+// SQL (the row policy forces submitted_by, not id), so this would otherwise run
+// in a committee member's session when they open the list. Backslash-escape for
+// the JS string layer first, then esc() for the attribute layer.
+function jsAttr(s) { return esc(String(s ?? "").replace(/\\/g, "\\\\").replace(/'/g, "\\'")); }
+
 function memberName(id) { return memberMap.get(id)?.name ?? "Unknown"; }
 function committeeGroup()   { return _committeeGroup(groups, settings.committee_group_id); }
 function isVoter(m)        { return _isVoter(m, groups, settings.committee_group_id); }
 function canSeeRequest(req){ return _canSeeRequest(req, ME, groups, settings.committee_group_id); }
 function fmtDate(iso) {
   if (!iso) return "";
-  return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  const d = new Date(iso);
+  if (isNaN(d)) return "";
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 function docIcon(name) {
   if (/\.(jpg|jpeg|png|gif|webp|heic)$/i.test(name)) return "🖼️";
@@ -412,10 +424,18 @@ async function submitRequest(fields) {
      VALUES (?, ?, ?, ?, ?, 'pending', ?, '', ?, ?, ?)`,
     [id, fields.title, fields.description, fields.category, fields.unit_ref, ME?.id ?? "system", vis, now, now]
   );
-  await Promise.all([
-    notify(`New ARC request: ${fields.title}`, `${ME?.name ?? "Someone"} submitted an ARC request.`),
-    loadRequests(),
-  ]);
+  const tasks = [loadRequests()];
+  // Only ping the committee (the reviewers). Falling back to a household-wide
+  // "adults" broadcast would leak a private request's title to everyone; and with
+  // no committee configured there is nobody to review it yet.
+  if (settings.committee_group_id) {
+    tasks.push(notify(
+      `New ARC request: ${fields.title}`,
+      `${ME?.name ?? "Someone"} submitted an ARC request.`,
+      settings.committee_group_id,
+    ));
+  }
+  await Promise.all(tasks);
   return id;
 }
 
@@ -438,15 +458,26 @@ function castVote(requestId, voteValue, notes) {
   })();
 }
 
-function issueDecision(requestId, decision, rationale) {
+async function issueDecision(requestId, decision, rationale) {
   if (!ME) return;
   const now = new Date().toISOString();
   // Decisions are written to the committee-only `decisions` table
   // (insert_privileged_only via the committee group). A homeowner cannot record a
   // decision on their own request because they are not in the committee group.
+  const prev = decisionMap.get(requestId);
   decisionMap.set(requestId, { request_id: requestId, status: decision, rationale, decided_by: ME.id, decided_at: now });
   render();
-  appendRecord("decisions", { request_id: requestId, status: decision, rationale }).catch(() => {});
+  try {
+    await appendRecord("decisions", { request_id: requestId, status: decision, rationale });
+  } catch (e) {
+    // The committee-only insert was rejected (e.g. the caller isn't actually in
+    // the configured committee group). Roll back so we don't show — and notify a
+    // submitter about — a decision that never persisted.
+    if (prev) decisionMap.set(requestId, prev); else decisionMap.delete(requestId);
+    render();
+    hubAlert("Could not record decision: " + (e.message || "permission denied"));
+    throw e;
+  }
 }
 
 async function addComment(requestId, body) {
@@ -465,13 +496,19 @@ async function uploadDoc(file, requestId) {
   if (area) area.textContent = "⏳ Uploading…";
   try {
     const { id: fileId } = await files.upload(file);
+    // Mirror the request's visibility in the household document library: a public
+    // request's attachments are visible to everyone, a private request's are not
+    // broadcast household-wide. (Committee members reach private-request docs
+    // through the app's own sourceId listing, gated by the requests row policy.)
+    const req = requests.find(r => r.id === requestId);
+    const sharedWith = req?.visibility === "public" ? ["everyone"] : [];
     const res = await fetch(DOCS, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         title: file.name, category: "home",
         fileKey: fileId, mimeType: file.type, sizeBytes: file.size,
-        sourceId: requestId, sharedWith: ["everyone"],
+        sourceId: requestId, sharedWith,
       }),
     });
     const { id: docId } = await res.json();
@@ -650,12 +687,23 @@ function openDecisionModal(req) {
     </div>`);
 }
 
-window.submitDecision = function() {
+window.submitDecision = async function() {
   const decision  = document.getElementById("d-decision").value;
   const rationale = document.getElementById("d-rationale").value.trim();
   if (!rationale) { document.getElementById("d-rationale").focus(); return; }
-  issueDecision(detailId, decision, rationale);
-  notify(`ARC decision: ${STATUS_LABELS[decision]}`, `Your ARC request has received a decision: ${STATUS_LABELS[decision]}.`).catch(() => {});
+  const btn = modalEl?.querySelector(".modal-actions .btn-primary");
+  if (btn) { btn.disabled = true; btn.textContent = "Issuing…"; }
+  const req = requests.find(r => r.id === detailId);
+  try {
+    await issueDecision(detailId, decision, rationale);
+  } catch {
+    if (btn) { btn.disabled = false; btn.textContent = "Issue Decision"; }
+    return; // issueDecision already alerted and rolled back
+  }
+  // Notify the submitter (not the committee) — this is their decision result.
+  if (req?.submitted_by) {
+    notify(`ARC decision: ${STATUS_LABELS[decision]}`, `Your ARC request has received a decision: ${STATUS_LABELS[decision]}.`, [req.submitted_by]).catch(() => {});
+  }
   closeModal();
   renderDetail();
 };
@@ -681,7 +729,7 @@ function renderDetail() {
   const catLabel   = CAT_LABELS[req.category] ?? req.category;
   const statColor  = STATUS_COLORS[req.status] ?? "#6b7280";
   const statLabel  = STATUS_LABELS[req.status] ?? req.status;
-  const isDecided  = ["approved","approved_with_conditions","denied"].includes(req.status);
+  const isDecided  = DECISION_STATUSES.includes(req.status);
   const isActive   = ["pending","under_review"].includes(req.status);
 
   // ── Votes section ──
@@ -750,7 +798,7 @@ function renderDetail() {
         <div class="doc-name">${esc(d.title)}</div>
         <div class="doc-meta">${formatBytes(d.sizeBytes ?? 0)} · ${fmtDate(d.createdAt)}</div>
       </div>
-      ${meIsAdmin ? `<button class="btn btn-ghost btn-sm" onclick="event.preventDefault();doDelDoc('${d.id}','${esc(d.fileKey ?? '')}')">✕</button>` : ""}
+      ${meIsAdmin ? `<button class="btn btn-ghost btn-sm" onclick="event.preventDefault();doDelDoc('${jsAttr(d.id)}','${jsAttr(d.fileKey ?? '')}')">✕</button>` : ""}
     </a>`).join("");
 
   const uploadHtml = window.__FILES_URL && ME && isAdult(ME) ? `
@@ -795,7 +843,7 @@ function renderDetail() {
         ? `<span class="badge badge-outline">🌐 Public</span>`
         : `<span class="badge badge-outline">🔒 Private</span>`}
       ${meIsAdmin ? `
-        <button class="btn btn-ghost btn-sm" onclick="toggleVisibility('${esc(req.id)}','${req.visibility === 'public' ? 'private' : 'public'}')">
+        <button class="btn btn-ghost btn-sm" onclick="toggleVisibility('${jsAttr(req.id)}','${req.visibility === 'public' ? 'private' : 'public'}')">
           Make ${req.visibility === "public" ? "Private" : "Public"}
         </button>` : ""}
     </div>
@@ -829,7 +877,7 @@ function renderDetail() {
 
     <div style="display:flex;gap:8px;margin-top:4px">
       <button class="btn btn-ghost btn-sm" onclick="backToList()">← Back to List</button>
-      ${meIsAdmin ? `<button class="btn btn-danger btn-sm" onclick="doDelete('${esc(req.id)}')">Delete</button>` : ""}
+      ${meIsAdmin ? `<button class="btn btn-danger btn-sm" onclick="doDelete('${jsAttr(req.id)}')">Delete</button>` : ""}
     </div>`;
 }
 
@@ -876,7 +924,7 @@ window.postComment = async function() {
 function filteredRequests() {
   const visible = requests.filter(canSeeRequest);
   if (filter === "all")     return visible;
-  if (filter === "decided") return visible.filter(r => ["approved","approved_with_conditions","denied"].includes(r.status));
+  if (filter === "decided") return visible.filter(r => DECISION_STATUSES.includes(r.status));
   return visible.filter(r => ["pending","under_review"].includes(r.status));
 }
 
@@ -887,7 +935,7 @@ function renderList() {
   const visible  = requests.filter(canSeeRequest);
   const counts   = {
     open:    visible.filter(r => ["pending","under_review"].includes(r.status)).length,
-    decided: visible.filter(r => ["approved","approved_with_conditions","denied"].includes(r.status)).length,
+    decided: visible.filter(r => DECISION_STATUSES.includes(r.status)).length,
     all:     visible.length,
   };
 
@@ -900,7 +948,7 @@ function renderList() {
     ? `<div class="empty">No ${filter !== "all" ? FL[filter].toLowerCase() + " " : ""}requests.</div>`
     : filtered.map(req => {
         return `
-          <div class="req-card" onclick="openDetail('${esc(req.id)}')">
+          <div class="req-card" onclick="openDetail('${jsAttr(req.id)}')">
             <div class="req-top">
               <span class="req-icon">${CAT_ICONS[req.category] ?? "📋"}</span>
               <div class="req-title-wrap">

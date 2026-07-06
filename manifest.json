@@ -32,7 +32,11 @@
       "parent_table": "requests",
       "writer_column": "voter_id",
       "insert_privileged_only": true,
-      "endpoint_writes_only": true
+      "endpoint_writes_only": true,
+      "column_read_acls": {
+        "vote":  { "visible_to": ["owner", "privileged"] },
+        "notes": { "visible_to": ["owner", "privileged"] }
+      }
     },
     "comments": {
       "kind": "inherit_visibility",

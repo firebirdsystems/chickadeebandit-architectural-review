@@ -2,6 +2,14 @@ import { isAdult } from "./shared.js";
 export { isAdult };
 
 /**
+ * Terminal statuses — a committee decision has been issued. A request in any
+ * other status is still active. Single source of truth shared by the client
+ * (applyDecisions, filters, counts) so the list never drifts from the SQL
+ * exports, which hard-code the same set.
+ */
+export const DECISION_STATUSES = ["approved", "approved_with_conditions", "denied"];
+
+/**
  * Returns the hub member group acting as the ARC committee, or null if all
  * adults are voters (no specific group configured).
  *
