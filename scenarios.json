@@ -1,0 +1,32 @@
+{
+  "scenarios": [
+    {
+      "name": "private requests are visible only to the submitter (committee aside); public ones to everyone",
+      "members": { "owner": "adult", "other": "adult" },
+      "steps": [
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_architectural_review__requests (id, title, status, submitted_by, visibility, created_at, updated_at) VALUES (?, ?, 'pending', ?, 'private', ?, ?)",
+          "params": ["req-priv", "New fence", "{{owner}}", "2026-01-01T00:00:00Z", "2026-01-01T00:00:00Z"]
+        },
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_architectural_review__requests (id, title, status, submitted_by, visibility, created_at, updated_at) VALUES (?, ?, 'pending', ?, 'public', ?, ?)",
+          "params": ["req-pub", "Solar panels", "{{owner}}", "2026-01-01T00:00:00Z", "2026-01-01T00:00:00Z"]
+        },
+        {
+          "action": "db",
+          "as": "owner",
+          "sql": "SELECT id FROM app_architectural_review__requests",
+          "expect": { "status": 200, "rowCount": 2 }
+        },
+        {
+          "action": "db",
+          "as": "other",
+          "sql": "SELECT id FROM app_architectural_review__requests",
+          "expect": { "status": 200, "rowCount": 1, "rowsContain": [{ "id": "req-pub" }] }
+        }
+      ]
+    }
+  ]
+}
