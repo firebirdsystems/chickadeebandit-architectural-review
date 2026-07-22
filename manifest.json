@@ -1,5 +1,6 @@
 {
   "id": "architectural-review",
+  "contexts": ["household", "shared_space"],
   "name": "ARC Requests",
   "version": "1.0.0",
   "description": "Homeowners submit modification requests for ARC committee review. Committee votes, issues decisions with written rationale, and tracks status to resolution.",
