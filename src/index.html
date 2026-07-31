@@ -498,10 +498,15 @@ async function uploadDoc(file, requestId) {
     const { id: fileId } = await files.upload(file);
     // Mirror the request's visibility in the household document library: a public
     // request's attachments are visible to everyone, a private request's are not
-    // broadcast household-wide. (Committee members reach private-request docs
-    // through the app's own sourceId listing, gated by the requests row policy.)
+    // broadcast household-wide. A private request's document names the committee
+    // group instead — under file_acls.read "document_acl" the hub serves file
+    // BYTES only to members the linked document admits (owner, admins, and the
+    // named group), so the committee can review a private request's attachments
+    // without the household seeing them.
     const req = requests.find(r => r.id === requestId);
-    const sharedWith = req?.visibility === "public" ? ["everyone"] : [];
+    const sharedWith = req?.visibility === "public"
+      ? ["everyone"]
+      : (settings.committee_group_id ? [settings.committee_group_id] : []);
     const res = await fetch(DOCS, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
