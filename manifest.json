@@ -129,6 +129,22 @@
   "document_acls": {
     "write": { "require_role": "adult" }
   },
+  "member_references": {
+    "requests": [
+      { "column": "submitted_by", "on_removed": "keep" },
+      { "column": "decided_by", "on_removed": "keep" }
+    ],
+    "votes": { "column": "voter_id", "on_removed": "keep" },
+    "comments": { "column": "author_id", "on_removed": "keep" },
+    "decisions": { "column": "decided_by", "on_removed": "keep" }
+  },
+  "delete_cascades": {
+    "requests": [
+      { "table": "votes", "foreign_key": "request_id" },
+      { "table": "comments", "foreign_key": "request_id" },
+      { "table": "decisions", "foreign_key": "request_id" }
+    ]
+  },
   "nav": {
     "label": "ARC Requests"
   },
