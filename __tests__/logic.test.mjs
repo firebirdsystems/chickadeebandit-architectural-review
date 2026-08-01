@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { committeeGroup, isVoter, canSeeRequest, isAdult } from "../src/logic.js";
+import { committeeGroup, isVoter, canSeeRequest, isAdult, searchableFields } from "../src/logic.js";
 import { testPrivilegedGateContract } from "./helpers/privileged-gate.mjs";
 
 const GROUPS = [
@@ -135,5 +135,16 @@ describe("isAdult", () => {
 
   it("returns false for null", () => {
     expect(isAdult(null)).toBe(false);
+  });
+});
+
+describe("searchableFields", () => {
+  it("matches on the unit reference and the proposal body", () => {
+    const fields = searchableFields({
+      title: "Fence replacement", description: "6ft cedar, rear boundary",
+      category: "fence", unit_ref: "12 Elm",
+    });
+    expect(fields).toContain("12 Elm");
+    expect(fields).toContain("6ft cedar, rear boundary");
   });
 });

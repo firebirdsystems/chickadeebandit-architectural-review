@@ -57,3 +57,13 @@ export function canSeeRequest(req, me, groups, committeeGroupId) {
   if (me && req.submitted_by === me.id) return true;
   return req.visibility === "public";
 }
+
+/**
+ * Fields the in-app search matches against (see hub-sdk `searchMatch`).
+ * The description and the unit reference count as well as the title —
+ * an ARC request is looked up as "the fence at number 12", which is the
+ * unit plus what was actually proposed.
+ */
+export function searchableFields(item) {
+  return [item.title, item.description, item.category, item.unit_ref];
+}
