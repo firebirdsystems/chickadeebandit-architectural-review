@@ -17,6 +17,11 @@
     "requires_approval": false
   },
   "storage": "db",
+  "preload": {
+    "settings": {"sql": "SELECT key, value FROM app_architectural_review__settings WHERE key IN ('committee_group_id', 'default_visibility')"},
+    "requests": {"sql": "SELECT * FROM app_architectural_review__requests ORDER BY created_at DESC"},
+    "decisions": {"sql": "SELECT request_id, status, rationale, decided_by, decided_at FROM app_architectural_review__decisions ORDER BY decided_at ASC"}
+  },
   "glance": {
     "source": {
       "kind": "sql",
