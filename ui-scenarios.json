@@ -1,0 +1,123 @@
+{
+  "scenarios": [
+    {
+      "name": "the committee vote panel follows the configured committee group; everyone else gets the read-only notice",
+      "members": {
+        "viewer": "adult",
+        "other": "adult"
+      },
+      "steps": [
+        {
+          "action": "seedGroup",
+          "group": "social",
+          "name": "Social Committee",
+          "members": [
+            "other"
+          ]
+        },
+        {
+          "action": "seedGroup",
+          "group": "arc",
+          "name": "Architectural Review Committee",
+          "members": [
+            "viewer"
+          ]
+        },
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_architectural_review__settings (key, value) VALUES ('committee_group_id', ?)",
+          "params": [
+            "{{group:social}}"
+          ]
+        },
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_architectural_review__requests (id, title, description, category, unit_ref, status, submitted_by, decision_note, created_at, updated_at, visibility) VALUES (?, ?, ?, 'fence', ?, 'pending', ?, '', datetime('now'), datetime('now'), 'public')",
+          "params": [
+            "ui-req",
+            "Replace the side fence",
+            "Six-foot cedar, same line as the existing one.",
+            "Unit 12",
+            "{{other}}"
+          ]
+        },
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, notes, created_at) VALUES (?, 'ui-req', ?, 'approve', ?, datetime('now'))",
+          "params": [
+            "ui-vote",
+            "{{other}}",
+            "Matches the streetscape."
+          ]
+        },
+        {
+          "action": "open",
+          "as": "viewer"
+        },
+        {
+          "action": "expectVisible",
+          "as": "viewer",
+          "selector": "[data-testid=\"req-card\"][data-request-id=\"ui-req\"]"
+        },
+        {
+          "action": "click",
+          "as": "viewer",
+          "selector": "[data-testid=\"req-card\"][data-request-id=\"ui-req\"]"
+        },
+        {
+          "action": "expectVisible",
+          "as": "viewer",
+          "selector": "[data-testid=\"request-detail\"][data-request-status=\"pending\"]"
+        },
+        {
+          "action": "expectCount",
+          "as": "viewer",
+          "selector": "[data-testid=\"vote-panel\"]",
+          "count": 0
+        },
+        {
+          "action": "expectVisible",
+          "as": "viewer",
+          "selector": "[data-testid=\"review-notice\"]"
+        },
+        {
+          "action": "seedRaw",
+          "sql": "UPDATE app_architectural_review__settings SET value = ? WHERE key = 'committee_group_id'",
+          "params": [
+            "{{group:arc}}"
+          ]
+        },
+        {
+          "action": "reload",
+          "as": "viewer"
+        },
+        {
+          "action": "expectVisible",
+          "as": "viewer",
+          "selector": "[data-testid=\"req-card\"][data-request-id=\"ui-req\"]"
+        },
+        {
+          "action": "click",
+          "as": "viewer",
+          "selector": "[data-testid=\"req-card\"][data-request-id=\"ui-req\"]"
+        },
+        {
+          "action": "expectVisible",
+          "as": "viewer",
+          "selector": "[data-testid=\"request-detail\"][data-request-status=\"pending\"]"
+        },
+        {
+          "action": "expectVisible",
+          "as": "viewer",
+          "selector": "[data-testid=\"vote-panel\"]"
+        },
+        {
+          "action": "expectCount",
+          "as": "viewer",
+          "selector": "[data-testid=\"review-notice\"]",
+          "count": 0
+        }
+      ]
+    }
+  ]
+}

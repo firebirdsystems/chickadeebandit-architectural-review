@@ -752,12 +752,12 @@ function renderDetail() {
   for (const v of reqVotes) { if (tally[v.vote] !== undefined) tally[v.vote]++; }
 
   const readOnlyNoteHtml = !meIsAdmin && isActive ? `
-    <div class="card" style="font-size:.85rem;color:var(--muted);text-align:center;padding:12px 16px">
+    <div class="card" data-testid="review-notice" style="font-size:.85rem;color:var(--muted);text-align:center;padding:12px 16px">
       This request is under committee review.
     </div>` : "";
 
   const votePanelHtml = meIsAdmin && isActive ? `
-    <div class="card">
+    <div class="card" data-testid="vote-panel">
       <div class="section-title">Committee Votes</div>
       ${reqVotes.length > 0 ? `
         <div class="tally-bar">
@@ -861,7 +861,7 @@ function renderDetail() {
         </button>` : ""}
     </div>
 
-    <div class="card">
+    <div class="card" data-testid="request-detail" data-request-id="${esc(req.id)}" data-request-status="${esc(req.status)}">
       <p style="font-size:.9rem;line-height:1.6;white-space:pre-wrap">${esc(req.description)}</p>
     </div>
 
@@ -964,7 +964,7 @@ function renderList() {
       : `<div class="empty">No ${filter !== "all" ? FL[filter].toLowerCase() + " " : ""}requests.</div>`)
     : filtered.map(req => {
         return `
-          <div class="req-card" onclick="openDetail('${jsAttr(req.id)}')">
+          <div class="req-card" data-testid="req-card" data-request-id="${esc(req.id)}" onclick="openDetail('${jsAttr(req.id)}')">
             <div class="req-top">
               <span class="req-icon">${CAT_ICONS[req.category] ?? "📋"}</span>
               <div class="req-title-wrap">
