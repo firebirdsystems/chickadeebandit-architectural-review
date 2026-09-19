@@ -31,7 +31,7 @@
     header {
       display: flex; align-items: center; justify-content: space-between;
       margin-bottom: 16px; padding: 14px 18px;
-      background: var(--accent); border-radius: var(--radius); color: white;
+      background: var(--accent); border-radius: var(--radius); color: var(--accent-fg);
     }
     header h1 { font-size: 1.2rem; font-weight: 700; }
     header .sub { font-size: 0.8rem; opacity: .75; margin-top: 1px; }
@@ -42,7 +42,7 @@
       font-size: 0.875rem; font-weight: 600; cursor: pointer; border: none; transition: opacity .15s;
     }
     .btn:disabled { opacity: .5; cursor: default; }
-    .btn-primary  { background: var(--accent); color: white; }
+    .btn-primary  { background: var(--accent); color: var(--accent-fg); }
     .btn-primary:hover:not(:disabled) { opacity: .88; }
     .btn-ghost    { background: transparent; color: var(--muted); border: 1.5px solid var(--border); }
     .btn-ghost:hover { border-color: var(--text); color: var(--text); }
@@ -64,7 +64,7 @@
       border: 1.5px solid var(--border); background: var(--card);
       font-size: 0.88rem; font-weight: 600; cursor: pointer; color: var(--muted); transition: all .15s;
     }
-    .item-tab.active { border-color: var(--accent); background: #f3f4f6; color: var(--accent); }
+    .item-tab.active { border-color: var(--accent); background: var(--bg); color: var(--accent); }
 
     .card {
       background: var(--card); border: 1px solid var(--border);
@@ -149,19 +149,19 @@
       padding: 16px; text-align: center; color: var(--muted);
       font-size: 0.88rem; cursor: pointer; transition: all .15s;
     }
-    .upload-area:hover { border-color: var(--accent); color: var(--accent); background: #f3f4f6; }
-    .upload-area.dragover { border-color: var(--accent); background: #f3f4f6; }
+    .upload-area:hover { border-color: var(--accent); color: var(--accent); background: var(--bg); }
+    .upload-area.dragover { border-color: var(--accent); background: var(--bg); }
 
     .decision-box {
       border-radius: var(--radius); padding: 14px 16px; margin-bottom: 10px;
     }
-    .decision-box.approved           { background: #f0fdf4; border: 1px solid #bbf7d0; }
-    .decision-box.approved_with_conditions { background: #fefce8; border: 1px solid #fde68a; }
-    .decision-box.denied             { background: #fef2f2; border: 1px solid #fecaca; }
+    .decision-box.approved           { background: var(--hub-tint-success, #f0fdf4); border: 1px solid var(--hub-tint-success-border, #bbf7d0); }
+    .decision-box.approved_with_conditions { background: var(--hub-tint-warning, #fefce8); border: 1px solid var(--hub-tint-warning-border, #fde68a); }
+    .decision-box.denied             { background: var(--bg); border: 1px solid #fecaca; }
 
     .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: flex; align-items: flex-end; justify-content: center; z-index: 100; }
     @media (min-width: 480px) { .modal-backdrop { align-items: center; padding: 20px; } }
-    .modal { background: white; border-radius: var(--radius) var(--radius) 0 0; width: 100%; max-width: 520px; padding: 22px; max-height: 92vh; overflow-y: auto; }
+    .modal { background: var(--card); border-radius: var(--radius) var(--radius) 0 0; width: 100%; max-width: 520px; padding: 22px; max-height: 92vh; overflow-y: auto; }
     @media (min-width: 480px) { .modal { border-radius: var(--radius); } }
     .modal h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 16px; }
     .modal-actions { display: flex; gap: 8px; margin-top: 18px; flex-wrap: wrap; }
@@ -172,7 +172,7 @@
     .form-group input, .form-group select, .form-group textarea {
       width: 100%; border: 1.5px solid var(--border); border-radius: 8px;
       padding: 9px 12px; font-size: 0.95rem; outline: none; transition: border-color .15s;
-      background: white; font-family: inherit; color: inherit;
+      background: var(--card); font-family: inherit; color: inherit;
     }
     .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--accent); }
     .form-group textarea { resize: vertical; min-height: 72px; }
