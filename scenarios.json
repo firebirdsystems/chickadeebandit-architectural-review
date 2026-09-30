@@ -27,6 +27,140 @@
           "expect": { "status": 200, "rowCount": 1, "rowsContain": [{ "id": "req-pub" }] }
         }
       ]
+    },
+    {
+      "name": "a child cannot see an adult's private request and cannot edit an adult's public request",
+      "members": { "kid": "child", "parent": "adult" },
+      "steps": [
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_architectural_review__requests (id, title, status, submitted_by, visibility, created_at, updated_at) VALUES ('req-priv', 'New fence', 'pending', ?, 'private', '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z')",
+          "params": ["{{parent}}"]
+        },
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_architectural_review__requests (id, title, status, submitted_by, visibility, created_at, updated_at) VALUES ('req-pub', 'Solar panels', 'pending', ?, 'public', '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z')",
+          "params": ["{{parent}}"]
+        },
+        {
+          "action": "db",
+          "as": "kid",
+          "sql": "SELECT id FROM app_architectural_review__requests",
+          "expect": { "status": 200, "rowCount": 1, "rowsContain": [{ "id": "req-pub" }] }
+        },
+        {
+          "action": "db",
+          "as": "kid",
+          "sql": "UPDATE app_architectural_review__requests SET title = 'Tampered' WHERE id = 'req-pub'",
+          "expect": { "status": 200 }
+        },
+        {
+          "action": "db",
+          "as": "parent",
+          "sql": "SELECT title FROM app_architectural_review__requests WHERE id = 'req-pub'",
+          "expect": { "status": 200, "rowCount": 1, "rowsContain": [{ "title": "Solar panels" }] }
+        }
+      ]
+    },
+    {
+      "name": "a child cannot cast a committee vote or record a decision through app SQL",
+      "members": { "kid": "child", "parent": "adult" },
+      "steps": [
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_architectural_review__requests (id, title, status, submitted_by, visibility, created_at, updated_at) VALUES ('req-pub', 'Solar panels', 'pending', ?, 'public', '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z')",
+          "params": ["{{parent}}"]
+        },
+        {
+          "action": "db",
+          "as": "kid",
+          "sql": "INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, created_at) VALUES ('v1', 'req-pub', ?, 'approve', '2026-01-02T00:00:00Z')",
+          "params": ["{{kid}}"],
+          "expect": { "status": 403 }
+        },
+        {
+          "action": "db",
+          "as": "kid",
+          "sql": "INSERT INTO app_architectural_review__decisions (id, request_id, status, decided_by, decided_at) VALUES ('d1', 'req-pub', 'approved', ?, '2026-01-02T00:00:00Z')",
+          "params": ["{{kid}}"],
+          "expect": { "status": 403 }
+        },
+        {
+          "action": "db",
+          "as": "parent",
+          "sql": "SELECT id FROM app_architectural_review__decisions WHERE request_id = 'req-pub'",
+          "expect": { "status": 200, "rowCount": 0 }
+        }
+      ]
+    },
+    {
+      "name": "a committee-group member sees a homeowner's private request while a plain adult outside the group does not",
+      "members": { "committee": "adult", "outsider": "adult", "homeowner": "adult" },
+      "steps": [
+        { "action": "seedGroup", "group": "arc", "name": "Architectural Committee", "members": ["committee"] },
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_architectural_review__settings (key, value) VALUES ('committee_group_id', ?)",
+          "params": ["{{group:arc}}"]
+        },
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_architectural_review__requests (id, title, status, submitted_by, visibility, created_at, updated_at) VALUES (?, ?, 'pending', ?, 'private', ?, ?)",
+          "params": ["req-priv", "New fence", "{{homeowner}}", "2026-01-01T00:00:00Z", "2026-01-01T00:00:00Z"]
+        },
+        {
+          "action": "db",
+          "as": "committee",
+          "sql": "SELECT id, title FROM app_architectural_review__requests",
+          "expect": { "status": 200, "rowCount": 1, "rowsContain": [{ "id": "req-priv", "title": "New fence" }] }
+        },
+        {
+          "action": "db",
+          "as": "outsider",
+          "sql": "SELECT id FROM app_architectural_review__requests",
+          "expect": { "status": 200, "rowCount": 0 }
+        }
+      ]
+    },
+    {
+      "name": "committee votes and notes are readable by the committee group but masked for a plain adult outside it",
+      "members": { "voter": "adult", "committee": "adult", "outsider": "adult", "homeowner": "adult" },
+      "steps": [
+        { "action": "seedGroup", "group": "arc", "name": "Architectural Committee", "members": ["voter", "committee"] },
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_architectural_review__settings (key, value) VALUES ('committee_group_id', ?)",
+          "params": ["{{group:arc}}"]
+        },
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_architectural_review__requests (id, title, status, submitted_by, visibility, created_at, updated_at) VALUES (?, ?, 'pending', ?, 'public', ?, ?)",
+          "params": ["req-pub", "Solar panels", "{{homeowner}}", "2026-01-01T00:00:00Z", "2026-01-01T00:00:00Z"]
+        },
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, notes, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+          "params": ["v1", "req-pub", "{{voter}}", "deny", "Roof line too high", "2026-01-02T00:00:00Z"]
+        },
+        {
+          "action": "db",
+          "as": "committee",
+          "sql": "SELECT id, vote, notes FROM app_architectural_review__votes WHERE id = ?",
+          "params": ["v1"],
+          "expect": {
+            "status": 200,
+            "rowCount": 1,
+            "rowsContain": [{ "id": "v1", "vote": "deny", "notes": "Roof line too high" }]
+          }
+        },
+        {
+          "action": "db",
+          "as": "outsider",
+          "sql": "SELECT id, vote, notes FROM app_architectural_review__votes WHERE id = ?",
+          "params": ["v1"],
+          "expect": { "status": 200, "rowCount": 1, "rowsContain": [{ "id": "v1", "vote": null, "notes": null }] }
+        }
+      ]
     }
   ]
 }
