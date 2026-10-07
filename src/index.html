@@ -199,7 +199,7 @@
   <div id="root"><div class="loading">Loading…</div></div>
 </div>
 <script type="module">
-import { hubAlert, memberColor, initial, esc, isAdult, hubConfirm, createFilesHelper, searchMatch } from "/hub-sdk.js";
+import { hubAlert, memberColor, initial, esc, isAdult, hubConfirm, createFilesHelper, searchMatch, glyph } from "/hub-sdk.js";
 import {
   committeeGroup as _committeeGroup,
   isVoter       as _isVoter,
@@ -410,9 +410,9 @@ function fmtDate(iso) {
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 function docIcon(name) {
-  if (/\.(jpg|jpeg|png|gif|webp|heic)$/i.test(name)) return "🖼️";
-  if (/\.pdf$/i.test(name)) return "📄";
-  return "📎";
+  if (/\.(jpg|jpeg|png|gif|webp|heic)$/i.test(name)) return glyph("frame");
+  if (/\.pdf$/i.test(name)) return glyph("document");
+  return glyph("note");
 }
 function formatBytes(b) {
   if (!b) return "";
@@ -588,7 +588,7 @@ function closeModal() { modalEl?.remove(); modalEl = null; }
 
 function openSubmitForm() {
   openModal(`
-    <h3>🏛️ Submit ARC Request</h3>
+    <h3>${glyph("columns")} Submit ARC Request</h3>
     <div class="form-group">
       <label>Title</label>
       <input id="f-title" type="text" placeholder="6-foot cedar privacy fence, Exterior paint change…" data-autofocus />
@@ -612,8 +612,8 @@ function openSubmitForm() {
     <div class="form-group">
       <label>Visibility</label>
       <select id="f-vis">
-        <option value="private" ${settings.default_visibility === "private" ? "selected" : ""}>🔒 Private — committee only</option>
-        <option value="public"  ${settings.default_visibility === "public"  ? "selected" : ""}>🌐 Public — visible to all members</option>
+        <option value="private" ${settings.default_visibility === "private" ? "selected" : ""}>Private — committee only</option>
+        <option value="public"  ${settings.default_visibility === "public"  ? "selected" : ""}>Public — visible to all members</option>
       </select>
     </div>
     <div class="modal-actions">
@@ -685,9 +685,9 @@ function openDecisionModal(req) {
     <div class="form-group">
       <label>Decision</label>
       <select id="d-decision">
-        <option value="approved">✅ Approved</option>
-        <option value="approved_with_conditions">⚠️ Approved with Conditions</option>
-        <option value="denied">❌ Denied</option>
+        <option value="approved">Approved</option>
+        <option value="approved_with_conditions">Approved with Conditions</option>
+        <option value="denied">Denied</option>
       </select>
     </div>
     <div class="form-group">
@@ -811,7 +811,7 @@ function renderDetail() {
         <div class="doc-name">${esc(d.title)}</div>
         <div class="doc-meta">${formatBytes(d.sizeBytes ?? 0)} · ${fmtDate(d.createdAt)}</div>
       </div>
-      ${meIsAdmin ? `<button class="btn btn-ghost btn-sm" onclick="event.preventDefault();doDelDoc('${jsAttr(d.id)}','${jsAttr(d.fileKey ?? '')}')">✕</button>` : ""}
+      ${meIsAdmin ? `<button class="btn btn-ghost btn-sm" aria-label="Remove document" onclick="event.preventDefault();doDelDoc('${jsAttr(d.id)}','${jsAttr(d.fileKey ?? '')}')">${glyph("close")}</button>` : ""}
     </a>`).join("");
 
   const uploadHtml = window.__FILES_URL && ME && isAdult(ME) ? `
@@ -820,7 +820,7 @@ function renderDetail() {
       ondragover="event.preventDefault();this.classList.add('dragover')"
       ondragleave="this.classList.remove('dragover')"
       ondrop="handleDrop(event)">
-      📎 Attach photos, plans, or supporting documents
+      ${glyph("link")} Attach photos, plans, or supporting documents
     </div>
     <input type="file" id="file-input" style="display:none" accept="image/*,.pdf,.docx,.xlsx,.txt,.md" onchange="handleFileSelect(this)" />` : "";
 
@@ -853,8 +853,8 @@ function renderDetail() {
     <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
       <span class="badge" style="background:${statColor}">${statLabel}</span>
       ${req.visibility === "public"
-        ? `<span class="badge badge-outline">🌐 Public</span>`
-        : `<span class="badge badge-outline">🔒 Private</span>`}
+        ? `<span class="badge badge-outline">${glyph("people")} Public</span>`
+        : `<span class="badge badge-outline">${glyph("lock")} Private</span>`}
       ${meIsAdmin ? `
         <button class="btn btn-ghost btn-sm" onclick="toggleVisibility('${jsAttr(req.id)}','${req.visibility === 'public' ? 'private' : 'public'}')">
           Make ${req.visibility === "public" ? "Private" : "Public"}
@@ -983,10 +983,10 @@ function renderList() {
   const subLine = cGroup ? `Committee: ${esc(cGroup.name)}` : "Architectural Review Committee";
   document.getElementById("root").innerHTML = `
     <header>
-      <div><h1>🏛️ ARC Requests</h1><div class="sub">${subLine}</div></div>
+      <div><h1>${glyph("columns", { accent: "currentColor" })} ARC Requests</h1><div class="sub">${subLine}</div></div>
       <div style="display:flex;gap:6px">
-        ${(isVoter(ME) || ME?.isAdmin) ? `<button class="btn btn-icon" onclick="openSettingsModal()" title="Settings">⚙️</button>` : ""}
-        ${ME ? `<button class="btn btn-icon" onclick="openSubmitForm()" title="Submit Request">＋</button>` : ""}
+        ${(isVoter(ME) || ME?.isAdmin) ? `<button class="btn btn-icon" onclick="openSettingsModal()" title="Settings" aria-label="Settings">${glyph("gear", { accent: "currentColor" })}</button>` : ""}
+        ${ME ? `<button class="btn btn-icon" onclick="openSubmitForm()" title="Submit Request" aria-label="Submit Request">${glyph("plus", { accent: "currentColor" })}</button>` : ""}
       </div>
     </header>
     <div class="item-tabs">${tabsHtml}</div>
@@ -1015,7 +1015,7 @@ function openSettingsModal() {
   const isAdmin   = ME?.isAdmin === true;
   const groupOpts = groups.map(g => `
     <option value="${esc(g.id)}" ${settings.committee_group_id === g.id ? "selected" : ""}>
-      👥 ${esc(g.name)}
+      ${esc(g.name)}
     </option>`).join("");
 
   const editControls = isAdmin ? `
@@ -1027,14 +1027,14 @@ function openSettingsModal() {
       </select>
       <div style="font-size:.78rem;color:var(--muted);margin-top:4px">
         Members of the selected group can vote and issue decisions.
-        ${!settings.committee_group_id ? `<span style="color:var(--amber)">⚠️ Select a committee group to enable voting and decisions — they are disabled until one is set.</span>` : ""}
+        ${!settings.committee_group_id ? `<span style="color:var(--amber)">${glyph("warning")} Select a committee group to enable voting and decisions — they are disabled until one is set.</span>` : ""}
       </div>
     </div>
     <div class="form-group">
       <label>Default Request Visibility</label>
       <select id="s-vis">
-        <option value="private" ${settings.default_visibility === "private" ? "selected" : ""}>🔒 Private — committee only</option>
-        <option value="public"  ${settings.default_visibility === "public"  ? "selected" : ""}>🌐 Public — visible to all members</option>
+        <option value="private" ${settings.default_visibility === "private" ? "selected" : ""}>Private — committee only</option>
+        <option value="public"  ${settings.default_visibility === "public"  ? "selected" : ""}>Public — visible to all members</option>
       </select>
       <div style="font-size:.78rem;color:var(--muted);margin-top:4px">
         Submitters can override this per-request.
@@ -1044,12 +1044,12 @@ function openSettingsModal() {
       Committee group: <strong>${settings.committee_group_id
         ? (committeeGroup()?.name ?? settings.committee_group_id)
         : "Not configured"}</strong><br/>
-      Default visibility: <strong>${settings.default_visibility === "public" ? "🌐 Public" : "🔒 Private"}</strong>
+      Default visibility: <strong>${settings.default_visibility === "public" ? `${glyph("people")} Public` : `${glyph("lock")} Private`}</strong>
     </p>
     <p style="font-size:.8rem;color:var(--muted)">Only a hub admin can change these settings.</p>`;
 
   openModal(`
-    <h3>⚙️ ARC Settings</h3>
+    <h3>${glyph("gear")} ARC Settings</h3>
     ${editControls}
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal()">Close</button>
