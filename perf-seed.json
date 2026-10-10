@@ -1,0 +1,1776 @@
+{
+  "groups": [
+    {
+      "key": "arc",
+      "name": "Architectural Review Committee",
+      "members": [
+        "{{me}}",
+        "{{partner}}"
+      ]
+    }
+  ],
+  "seed": [
+    {
+      "sql": "INSERT INTO app_architectural_review__settings (key, value) VALUES (?, ?)",
+      "params": [
+        "committee_group_id",
+        "{{group:arc}}"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__settings (key, value) VALUES (?, ?)",
+      "params": [
+        "default_visibility",
+        "private"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__requests (id, title, description, category, unit_ref, status, submitted_by, created_at, updated_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-2 days','+0 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-2 days','+0 minutes'), ?)",
+      "params": [
+        "perf-req-01",
+        "Replace the side fence",
+        "Six-foot cedar, same line as the existing one.",
+        "fence",
+        "Lot 10",
+        "pending",
+        "{{adult2}}",
+        "public"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__comments (id, request_id, author_id, body, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-1 days','+60 minutes'))",
+      "params": [
+        "perf-cmt-01",
+        "perf-req-01",
+        "{{partner}}",
+        "Photo added to the description."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__comments (id, request_id, author_id, body, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-1 days','+150 minutes'))",
+      "params": [
+        "perf-cmt-02",
+        "perf-req-01",
+        "{{adult2}}",
+        "The neighbor on the east side has signed off."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__comments (id, request_id, author_id, body, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-1 days','+240 minutes'))",
+      "params": [
+        "perf-cmt-03",
+        "perf-req-01",
+        "{{me}}",
+        "Contractor can start within two weeks of approval."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__requests (id, title, description, category, unit_ref, status, submitted_by, created_at, updated_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-5 days','-23 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-5 days','-23 minutes'), ?)",
+      "params": [
+        "perf-req-02",
+        "Repaint exterior trim",
+        "Changing trim from white to a soft gray from the approved palette.",
+        "paint",
+        "Lot 17",
+        "pending",
+        "{{partner}}",
+        "private"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__comments (id, request_id, author_id, body, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-4 days','+60 minutes'))",
+      "params": [
+        "perf-cmt-04",
+        "perf-req-02",
+        "{{partner}}",
+        "Please confirm the setback from the property line."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__requests (id, title, description, category, unit_ref, status, submitted_by, created_at, updated_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-8 days','-46 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-8 days','-46 minutes'), ?)",
+      "params": [
+        "perf-req-03",
+        "Detached garage addition",
+        "Single-car garage, 20 by 24 feet, materials to match the house.",
+        "addition",
+        "Lot 24",
+        "pending",
+        "{{me}}",
+        "private"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__requests (id, title, description, category, unit_ref, status, submitted_by, created_at, updated_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-11 days','-69 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-11 days','-69 minutes'), ?)",
+      "params": [
+        "perf-req-04",
+        "Front yard xeriscape",
+        "Remove turf and replace with native plantings and river rock.",
+        "landscaping",
+        "Lot 31",
+        "pending",
+        "{{adult2}}",
+        "public"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__comments (id, request_id, author_id, body, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-10 days','+60 minutes'))",
+      "params": [
+        "perf-cmt-05",
+        "perf-req-04",
+        "{{adult2}}",
+        "Setback is five feet, per the survey."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__requests (id, title, description, category, unit_ref, status, submitted_by, created_at, updated_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-14 days','-92 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-14 days','-92 minutes'), ?)",
+      "params": [
+        "perf-req-05",
+        "Roof replacement",
+        "Architectural shingles in weathered wood, replacing the original three-tab roof.",
+        "roof",
+        "Lot 38",
+        "pending",
+        "{{child}}",
+        "private"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__comments (id, request_id, author_id, body, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-13 days','+60 minutes'))",
+      "params": [
+        "perf-cmt-06",
+        "perf-req-05",
+        "{{me}}",
+        "Thanks for the quick review."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__comments (id, request_id, author_id, body, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-13 days','+150 minutes'))",
+      "params": [
+        "perf-cmt-07",
+        "perf-req-05",
+        "{{child}}",
+        "Could you attach a photo of the current condition?"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__comments (id, request_id, author_id, body, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-13 days','+240 minutes'))",
+      "params": [
+        "perf-cmt-08",
+        "perf-req-05",
+        "{{adult2}}",
+        "Photo added to the description."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__requests (id, title, description, category, unit_ref, status, submitted_by, created_at, updated_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-17 days','-115 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-16 days','-115 minutes'), ?)",
+      "params": [
+        "perf-req-06",
+        "Rear deck extension",
+        "Extend the deck eight feet toward the back fence, composite boards.",
+        "deck",
+        "Lot 45",
+        "under_review",
+        "{{partner}}",
+        "private"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, notes, created_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-16 days','+0 minutes'))",
+      "params": [
+        "perf-vote-01",
+        "perf-req-06",
+        "{{adult2}}",
+        "approve",
+        "Fine as long as the height stays under six feet."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-16 days','+40 minutes'))",
+      "params": [
+        "perf-vote-02",
+        "perf-req-06",
+        "{{me}}",
+        "approve_with_conditions"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__requests (id, title, description, category, unit_ref, status, submitted_by, created_at, updated_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-20 days','-138 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-19 days','-138 minutes'), ?)",
+      "params": [
+        "perf-req-07",
+        "Widen driveway",
+        "Add a three-foot paver strip on the north side.",
+        "driveway",
+        "Lot 52",
+        "under_review",
+        "{{adult2}}",
+        "public"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, notes, created_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-19 days','+0 minutes'))",
+      "params": [
+        "perf-vote-03",
+        "perf-req-07",
+        "{{me}}",
+        "approve_with_conditions",
+        "Would like to see a site plan first."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__comments (id, request_id, author_id, body, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-19 days','+60 minutes'))",
+      "params": [
+        "perf-cmt-09",
+        "perf-req-07",
+        "{{me}}",
+        "The neighbor on the east side has signed off."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__requests (id, title, description, category, unit_ref, status, submitted_by, created_at, updated_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-23 days','-161 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-22 days','-161 minutes'), ?)",
+      "params": [
+        "perf-req-08",
+        "Solar panel installation",
+        "Sixteen panels on the south-facing roof plane, black frames.",
+        "other",
+        "Lot 11",
+        "under_review",
+        "{{me}}",
+        "private"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-22 days','+0 minutes'))",
+      "params": [
+        "perf-vote-04",
+        "perf-req-08",
+        "{{partner}}",
+        "deny"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, notes, created_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-22 days','+40 minutes'))",
+      "params": [
+        "perf-vote-05",
+        "perf-req-08",
+        "{{adult2}}",
+        "approve",
+        "Matches the streetscape."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__comments (id, request_id, author_id, body, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-22 days','+60 minutes'))",
+      "params": [
+        "perf-cmt-10",
+        "perf-req-08",
+        "{{partner}}",
+        "Contractor can start within two weeks of approval."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__requests (id, title, description, category, unit_ref, status, submitted_by, created_at, updated_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-26 days','-184 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-25 days','-184 minutes'), ?)",
+      "params": [
+        "perf-req-09",
+        "Backyard shed",
+        "Eight by ten shed, siding and color to match the house.",
+        "addition",
+        "Lot 18",
+        "under_review",
+        "{{child2}}",
+        "private"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-25 days','+0 minutes'))",
+      "params": [
+        "perf-vote-06",
+        "perf-req-09",
+        "{{adult2}}",
+        "approve"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__requests (id, title, description, category, unit_ref, status, submitted_by, created_at, updated_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-29 days','-207 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-28 days','-207 minutes'), ?)",
+      "params": [
+        "perf-req-10",
+        "Replace front door",
+        "Craftsman-style fiberglass door, stained walnut.",
+        "other",
+        "Lot 25",
+        "under_review",
+        "{{partner}}",
+        "public"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, notes, created_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-28 days','+0 minutes'))",
+      "params": [
+        "perf-vote-07",
+        "perf-req-10",
+        "{{me}}",
+        "approve_with_conditions",
+        "Color is outside the approved palette."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-28 days','+40 minutes'))",
+      "params": [
+        "perf-vote-08",
+        "perf-req-10",
+        "{{partner}}",
+        "approve"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__comments (id, request_id, author_id, body, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-28 days','+60 minutes'))",
+      "params": [
+        "perf-cmt-11",
+        "perf-req-10",
+        "{{adult2}}",
+        "Please confirm the setback from the property line."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__requests (id, title, description, category, unit_ref, status, submitted_by, created_at, updated_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-32 days','-230 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-31 days','-230 minutes'), ?)",
+      "params": [
+        "perf-req-11",
+        "Remove dead maple",
+        "Arborist report attached; replacing with two serviceberry trees.",
+        "landscaping",
+        "Lot 32",
+        "under_review",
+        "{{adult2}}",
+        "private"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, notes, created_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-31 days','+0 minutes'))",
+      "params": [
+        "perf-vote-09",
+        "perf-req-11",
+        "{{partner}}",
+        "approve",
+        "No concerns."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__comments (id, request_id, author_id, body, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-31 days','+60 minutes'))",
+      "params": [
+        "perf-cmt-12",
+        "perf-req-11",
+        "{{me}}",
+        "Setback is five feet, per the survey."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__requests (id, title, description, category, unit_ref, status, submitted_by, created_at, updated_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-35 days','-253 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-34 days','-253 minutes'), ?)",
+      "params": [
+        "perf-req-12",
+        "Pergola over patio",
+        "Twelve by twelve cedar pergola, freestanding.",
+        "deck",
+        "Lot 39",
+        "under_review",
+        "{{partner}}",
+        "private"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-34 days','+0 minutes'))",
+      "params": [
+        "perf-vote-10",
+        "perf-req-12",
+        "{{adult2}}",
+        "approve"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, notes, created_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-34 days','+40 minutes'))",
+      "params": [
+        "perf-vote-11",
+        "perf-req-12",
+        "{{me}}",
+        "approve_with_conditions",
+        "Fine as long as the height stays under six feet."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__requests (id, title, description, category, unit_ref, status, submitted_by, created_at, updated_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-38 days','-276 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-37 days','-276 minutes'), ?)",
+      "params": [
+        "perf-req-13",
+        "Replace the side fence (lot 22)",
+        "Six-foot cedar, same line as the existing one.",
+        "fence",
+        "Lot 46",
+        "under_review",
+        "{{me}}",
+        "public"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-37 days','+0 minutes'))",
+      "params": [
+        "perf-vote-12",
+        "perf-req-13",
+        "{{me}}",
+        "approve_with_conditions"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__comments (id, request_id, author_id, body, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-37 days','+60 minutes'))",
+      "params": [
+        "perf-cmt-13",
+        "perf-req-13",
+        "{{partner}}",
+        "Thanks for the quick review."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__comments (id, request_id, author_id, body, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-37 days','+150 minutes'))",
+      "params": [
+        "perf-cmt-14",
+        "perf-req-13",
+        "{{me}}",
+        "Could you attach a photo of the current condition?"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__comments (id, request_id, author_id, body, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-37 days','+240 minutes'))",
+      "params": [
+        "perf-cmt-15",
+        "perf-req-13",
+        "{{me}}",
+        "Photo added to the description."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__requests (id, title, description, category, unit_ref, status, submitted_by, created_at, updated_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-41 days','-299 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-40 days','-299 minutes'), ?)",
+      "params": [
+        "perf-req-14",
+        "Repaint exterior trim (lot 23)",
+        "Changing trim from white to a soft gray from the approved palette.",
+        "paint",
+        "Lot 53",
+        "under_review",
+        "{{adult2}}",
+        "private"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, notes, created_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-40 days','+0 minutes'))",
+      "params": [
+        "perf-vote-13",
+        "perf-req-14",
+        "{{partner}}",
+        "approve",
+        "Would like to see a site plan first."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-40 days','+40 minutes'))",
+      "params": [
+        "perf-vote-14",
+        "perf-req-14",
+        "{{adult2}}",
+        "deny"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__decisions (id, request_id, status, rationale, decided_by, decided_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-38 days','+0 minutes'))",
+      "params": [
+        "perf-dec-14",
+        "perf-req-14",
+        "approved",
+        "Approved as submitted.",
+        "{{partner}}"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__comments (id, request_id, author_id, body, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-40 days','+60 minutes'))",
+      "params": [
+        "perf-cmt-16",
+        "perf-req-14",
+        "{{partner}}",
+        "The neighbor on the east side has signed off."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__requests (id, title, description, category, unit_ref, status, submitted_by, created_at, updated_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-44 days','-322 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-43 days','-322 minutes'), ?)",
+      "params": [
+        "perf-req-15",
+        "Detached garage addition (lot 24)",
+        "Single-car garage, 20 by 24 feet, materials to match the house.",
+        "addition",
+        "Lot 12",
+        "under_review",
+        "{{child}}",
+        "private"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, notes, created_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-43 days','+0 minutes'))",
+      "params": [
+        "perf-vote-15",
+        "perf-req-15",
+        "{{adult2}}",
+        "deny",
+        "Matches the streetscape."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-43 days','+40 minutes'))",
+      "params": [
+        "perf-vote-16",
+        "perf-req-15",
+        "{{me}}",
+        "approve_with_conditions"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__decisions (id, request_id, status, rationale, decided_by, decided_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-41 days','+0 minutes'))",
+      "params": [
+        "perf-dec-15",
+        "perf-req-15",
+        "denied",
+        "Does not meet the design guidelines, section 4.2. Resubmit with a compliant material.",
+        "{{me}}"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__requests (id, title, description, category, unit_ref, status, submitted_by, created_at, updated_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-47 days','-345 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-46 days','-345 minutes'), ?)",
+      "params": [
+        "perf-req-16",
+        "Front yard xeriscape (lot 25)",
+        "Remove turf and replace with native plantings and river rock.",
+        "landscaping",
+        "Lot 19",
+        "under_review",
+        "{{partner}}",
+        "public"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, notes, created_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-46 days','+0 minutes'))",
+      "params": [
+        "perf-vote-17",
+        "perf-req-16",
+        "{{me}}",
+        "approve_with_conditions",
+        "Color is outside the approved palette."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-46 days','+40 minutes'))",
+      "params": [
+        "perf-vote-18",
+        "perf-req-16",
+        "{{partner}}",
+        "approve"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__decisions (id, request_id, status, rationale, decided_by, decided_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-44 days','+0 minutes'))",
+      "params": [
+        "perf-dec-16",
+        "perf-req-16",
+        "approved_with_conditions",
+        "Approved provided the finish matches the existing structure and work completes within 90 days.",
+        "{{partner}}"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__comments (id, request_id, author_id, body, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-46 days','+60 minutes'))",
+      "params": [
+        "perf-cmt-17",
+        "perf-req-16",
+        "{{adult2}}",
+        "Contractor can start within two weeks of approval."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__requests (id, title, description, category, unit_ref, status, submitted_by, created_at, updated_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-50 days','-368 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-49 days','-368 minutes'), ?)",
+      "params": [
+        "perf-req-17",
+        "Roof replacement (lot 26)",
+        "Architectural shingles in weathered wood, replacing the original three-tab roof.",
+        "roof",
+        "Lot 26",
+        "under_review",
+        "{{adult2}}",
+        "private"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, notes, created_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-49 days','+0 minutes'))",
+      "params": [
+        "perf-vote-19",
+        "perf-req-17",
+        "{{partner}}",
+        "approve",
+        "No concerns."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-49 days','+40 minutes'))",
+      "params": [
+        "perf-vote-20",
+        "perf-req-17",
+        "{{adult2}}",
+        "approve"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, notes, created_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-49 days','+80 minutes'))",
+      "params": [
+        "perf-vote-21",
+        "perf-req-17",
+        "{{me}}",
+        "approve_with_conditions",
+        "Fine as long as the height stays under six feet."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__decisions (id, request_id, status, rationale, decided_by, decided_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-47 days','+0 minutes'))",
+      "params": [
+        "perf-dec-17",
+        "perf-req-17",
+        "approved",
+        "Approved as submitted.",
+        "{{me}}"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__comments (id, request_id, author_id, body, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-49 days','+60 minutes'))",
+      "params": [
+        "perf-cmt-18",
+        "perf-req-17",
+        "{{me}}",
+        "Please confirm the setback from the property line."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__comments (id, request_id, author_id, body, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-49 days','+150 minutes'))",
+      "params": [
+        "perf-cmt-19",
+        "perf-req-17",
+        "{{adult2}}",
+        "Setback is five feet, per the survey."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__comments (id, request_id, author_id, body, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-49 days','+240 minutes'))",
+      "params": [
+        "perf-cmt-20",
+        "perf-req-17",
+        "{{adult2}}",
+        "Thanks for the quick review."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__requests (id, title, description, category, unit_ref, status, submitted_by, created_at, updated_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-53 days','-391 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-52 days','-391 minutes'), ?)",
+      "params": [
+        "perf-req-18",
+        "Rear deck extension (lot 27)",
+        "Extend the deck eight feet toward the back fence, composite boards.",
+        "deck",
+        "Lot 33",
+        "under_review",
+        "{{me}}",
+        "private"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-52 days','+0 minutes'))",
+      "params": [
+        "perf-vote-22",
+        "perf-req-18",
+        "{{adult2}}",
+        "approve"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, notes, created_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-52 days','+40 minutes'))",
+      "params": [
+        "perf-vote-23",
+        "perf-req-18",
+        "{{me}}",
+        "approve_with_conditions",
+        "Would like to see a site plan first."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__decisions (id, request_id, status, rationale, decided_by, decided_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-50 days','+0 minutes'))",
+      "params": [
+        "perf-dec-18",
+        "perf-req-18",
+        "approved",
+        "Approved as submitted.",
+        "{{partner}}"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__requests (id, title, description, category, unit_ref, status, submitted_by, created_at, updated_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-56 days','-414 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-55 days','-414 minutes'), ?)",
+      "params": [
+        "perf-req-19",
+        "Widen driveway (lot 28)",
+        "Add a three-foot paver strip on the north side.",
+        "driveway",
+        "Lot 40",
+        "under_review",
+        "{{child2}}",
+        "public"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-55 days','+0 minutes'))",
+      "params": [
+        "perf-vote-24",
+        "perf-req-19",
+        "{{me}}",
+        "approve_with_conditions"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, notes, created_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-55 days','+40 minutes'))",
+      "params": [
+        "perf-vote-25",
+        "perf-req-19",
+        "{{partner}}",
+        "approve",
+        "Matches the streetscape."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__decisions (id, request_id, status, rationale, decided_by, decided_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-53 days','+0 minutes'))",
+      "params": [
+        "perf-dec-19",
+        "perf-req-19",
+        "approved_with_conditions",
+        "Approved provided the finish matches the existing structure and work completes within 90 days.",
+        "{{me}}"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__comments (id, request_id, author_id, body, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-55 days','+60 minutes'))",
+      "params": [
+        "perf-cmt-21",
+        "perf-req-19",
+        "{{me}}",
+        "Could you attach a photo of the current condition?"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__requests (id, title, description, category, unit_ref, status, submitted_by, created_at, updated_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-59 days','-437 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-58 days','-437 minutes'), ?)",
+      "params": [
+        "perf-req-20",
+        "Solar panel installation (lot 29)",
+        "Sixteen panels on the south-facing roof plane, black frames.",
+        "other",
+        "Lot 47",
+        "under_review",
+        "{{partner}}",
+        "private"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-58 days','+0 minutes'))",
+      "params": [
+        "perf-vote-26",
+        "perf-req-20",
+        "{{partner}}",
+        "approve"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, notes, created_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-58 days','+40 minutes'))",
+      "params": [
+        "perf-vote-27",
+        "perf-req-20",
+        "{{adult2}}",
+        "approve",
+        "Color is outside the approved palette."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__decisions (id, request_id, status, rationale, decided_by, decided_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-56 days','+0 minutes'))",
+      "params": [
+        "perf-dec-20",
+        "perf-req-20",
+        "approved",
+        "Approved as submitted.",
+        "{{partner}}"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__comments (id, request_id, author_id, body, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-58 days','+60 minutes'))",
+      "params": [
+        "perf-cmt-22",
+        "perf-req-20",
+        "{{partner}}",
+        "Photo added to the description."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__requests (id, title, description, category, unit_ref, status, submitted_by, created_at, updated_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-62 days','-460 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-61 days','-460 minutes'), ?)",
+      "params": [
+        "perf-req-21",
+        "Backyard shed (lot 30)",
+        "Eight by ten shed, siding and color to match the house.",
+        "addition",
+        "Lot 54",
+        "under_review",
+        "{{adult2}}",
+        "private"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-61 days','+0 minutes'))",
+      "params": [
+        "perf-vote-28",
+        "perf-req-21",
+        "{{adult2}}",
+        "approve"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, notes, created_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-61 days','+40 minutes'))",
+      "params": [
+        "perf-vote-29",
+        "perf-req-21",
+        "{{me}}",
+        "deny",
+        "No concerns."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-61 days','+80 minutes'))",
+      "params": [
+        "perf-vote-30",
+        "perf-req-21",
+        "{{partner}}",
+        "approve"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__decisions (id, request_id, status, rationale, decided_by, decided_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-59 days','+0 minutes'))",
+      "params": [
+        "perf-dec-21",
+        "perf-req-21",
+        "approved",
+        "Approved as submitted.",
+        "{{me}}"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__requests (id, title, description, category, unit_ref, status, submitted_by, created_at, updated_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-65 days','-483 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-64 days','-483 minutes'), ?)",
+      "params": [
+        "perf-req-22",
+        "Replace front door (lot 31)",
+        "Craftsman-style fiberglass door, stained walnut.",
+        "other",
+        "Lot 13",
+        "under_review",
+        "{{partner}}",
+        "public"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, notes, created_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-64 days','+0 minutes'))",
+      "params": [
+        "perf-vote-31",
+        "perf-req-22",
+        "{{me}}",
+        "deny",
+        "Fine as long as the height stays under six feet."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-64 days','+40 minutes'))",
+      "params": [
+        "perf-vote-32",
+        "perf-req-22",
+        "{{partner}}",
+        "approve"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__decisions (id, request_id, status, rationale, decided_by, decided_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-62 days','+0 minutes'))",
+      "params": [
+        "perf-dec-22",
+        "perf-req-22",
+        "denied",
+        "Does not meet the design guidelines, section 4.2. Resubmit with a compliant material.",
+        "{{partner}}"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__comments (id, request_id, author_id, body, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-64 days','+60 minutes'))",
+      "params": [
+        "perf-cmt-23",
+        "perf-req-22",
+        "{{adult2}}",
+        "The neighbor on the east side has signed off."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__requests (id, title, description, category, unit_ref, status, submitted_by, created_at, updated_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-68 days','-506 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-67 days','-506 minutes'), ?)",
+      "params": [
+        "perf-req-23",
+        "Remove dead maple (lot 32)",
+        "Arborist report attached; replacing with two serviceberry trees.",
+        "landscaping",
+        "Lot 20",
+        "under_review",
+        "{{me}}",
+        "private"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, notes, created_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-67 days','+0 minutes'))",
+      "params": [
+        "perf-vote-33",
+        "perf-req-23",
+        "{{partner}}",
+        "approve",
+        "Would like to see a site plan first."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-67 days','+40 minutes'))",
+      "params": [
+        "perf-vote-34",
+        "perf-req-23",
+        "{{adult2}}",
+        "approve"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__decisions (id, request_id, status, rationale, decided_by, decided_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-65 days','+0 minutes'))",
+      "params": [
+        "perf-dec-23",
+        "perf-req-23",
+        "approved",
+        "Approved as submitted.",
+        "{{me}}"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__comments (id, request_id, author_id, body, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-67 days','+60 minutes'))",
+      "params": [
+        "perf-cmt-24",
+        "perf-req-23",
+        "{{me}}",
+        "Contractor can start within two weeks of approval."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__requests (id, title, description, category, unit_ref, status, submitted_by, created_at, updated_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-71 days','-529 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-70 days','-529 minutes'), ?)",
+      "params": [
+        "perf-req-24",
+        "Pergola over patio (lot 33)",
+        "Twelve by twelve cedar pergola, freestanding.",
+        "deck",
+        "Lot 27",
+        "under_review",
+        "{{adult2}}",
+        "private"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, notes, created_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-70 days','+0 minutes'))",
+      "params": [
+        "perf-vote-35",
+        "perf-req-24",
+        "{{adult2}}",
+        "approve",
+        "Matches the streetscape."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-70 days','+40 minutes'))",
+      "params": [
+        "perf-vote-36",
+        "perf-req-24",
+        "{{me}}",
+        "approve_with_conditions"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__decisions (id, request_id, status, rationale, decided_by, decided_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-68 days','+0 minutes'))",
+      "params": [
+        "perf-dec-24",
+        "perf-req-24",
+        "approved",
+        "Approved as submitted.",
+        "{{partner}}"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__requests (id, title, description, category, unit_ref, status, submitted_by, created_at, updated_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-74 days','-552 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-73 days','-552 minutes'), ?)",
+      "params": [
+        "perf-req-25",
+        "Replace the side fence (lot 34)",
+        "Six-foot cedar, same line as the existing one.",
+        "fence",
+        "Lot 34",
+        "under_review",
+        "{{child}}",
+        "public"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, notes, created_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-73 days','+0 minutes'))",
+      "params": [
+        "perf-vote-37",
+        "perf-req-25",
+        "{{me}}",
+        "approve_with_conditions",
+        "Color is outside the approved palette."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-73 days','+40 minutes'))",
+      "params": [
+        "perf-vote-38",
+        "perf-req-25",
+        "{{partner}}",
+        "approve"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, notes, created_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-73 days','+80 minutes'))",
+      "params": [
+        "perf-vote-39",
+        "perf-req-25",
+        "{{adult2}}",
+        "approve",
+        "No concerns."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__decisions (id, request_id, status, rationale, decided_by, decided_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-71 days','+0 minutes'))",
+      "params": [
+        "perf-dec-25",
+        "perf-req-25",
+        "approved_with_conditions",
+        "Approved provided the finish matches the existing structure and work completes within 90 days.",
+        "{{me}}"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__comments (id, request_id, author_id, body, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-73 days','+60 minutes'))",
+      "params": [
+        "perf-cmt-25",
+        "perf-req-25",
+        "{{partner}}",
+        "Please confirm the setback from the property line."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__comments (id, request_id, author_id, body, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-73 days','+150 minutes'))",
+      "params": [
+        "perf-cmt-26",
+        "perf-req-25",
+        "{{child}}",
+        "Setback is five feet, per the survey."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__comments (id, request_id, author_id, body, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-73 days','+240 minutes'))",
+      "params": [
+        "perf-cmt-27",
+        "perf-req-25",
+        "{{me}}",
+        "Thanks for the quick review."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__requests (id, title, description, category, unit_ref, status, submitted_by, created_at, updated_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-77 days','-575 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-76 days','-575 minutes'), ?)",
+      "params": [
+        "perf-req-26",
+        "Repaint exterior trim (lot 35)",
+        "Changing trim from white to a soft gray from the approved palette.",
+        "paint",
+        "Lot 41",
+        "under_review",
+        "{{partner}}",
+        "private"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-76 days','+0 minutes'))",
+      "params": [
+        "perf-vote-40",
+        "perf-req-26",
+        "{{partner}}",
+        "approve"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, notes, created_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-76 days','+40 minutes'))",
+      "params": [
+        "perf-vote-41",
+        "perf-req-26",
+        "{{adult2}}",
+        "approve",
+        "Fine as long as the height stays under six feet."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__decisions (id, request_id, status, rationale, decided_by, decided_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-74 days','+0 minutes'))",
+      "params": [
+        "perf-dec-26",
+        "perf-req-26",
+        "approved",
+        "Approved as submitted.",
+        "{{partner}}"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__comments (id, request_id, author_id, body, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-76 days','+60 minutes'))",
+      "params": [
+        "perf-cmt-28",
+        "perf-req-26",
+        "{{partner}}",
+        "Could you attach a photo of the current condition?"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__requests (id, title, description, category, unit_ref, status, submitted_by, created_at, updated_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-80 days','-598 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-79 days','-598 minutes'), ?)",
+      "params": [
+        "perf-req-27",
+        "Detached garage addition (lot 36)",
+        "Single-car garage, 20 by 24 feet, materials to match the house.",
+        "addition",
+        "Lot 48",
+        "under_review",
+        "{{adult2}}",
+        "private"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-79 days','+0 minutes'))",
+      "params": [
+        "perf-vote-42",
+        "perf-req-27",
+        "{{adult2}}",
+        "approve"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, notes, created_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-79 days','+40 minutes'))",
+      "params": [
+        "perf-vote-43",
+        "perf-req-27",
+        "{{me}}",
+        "approve_with_conditions",
+        "Would like to see a site plan first."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__decisions (id, request_id, status, rationale, decided_by, decided_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-77 days','+0 minutes'))",
+      "params": [
+        "perf-dec-27",
+        "perf-req-27",
+        "approved",
+        "Approved as submitted.",
+        "{{me}}"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__requests (id, title, description, category, unit_ref, status, submitted_by, created_at, updated_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-83 days','-621 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-82 days','-621 minutes'), ?)",
+      "params": [
+        "perf-req-28",
+        "Front yard xeriscape (lot 37)",
+        "Remove turf and replace with native plantings and river rock.",
+        "landscaping",
+        "Lot 55",
+        "under_review",
+        "{{me}}",
+        "public"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-82 days','+0 minutes'))",
+      "params": [
+        "perf-vote-44",
+        "perf-req-28",
+        "{{me}}",
+        "approve_with_conditions"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, notes, created_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-82 days','+40 minutes'))",
+      "params": [
+        "perf-vote-45",
+        "perf-req-28",
+        "{{partner}}",
+        "deny",
+        "Matches the streetscape."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__decisions (id, request_id, status, rationale, decided_by, decided_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-80 days','+0 minutes'))",
+      "params": [
+        "perf-dec-28",
+        "perf-req-28",
+        "approved_with_conditions",
+        "Approved provided the finish matches the existing structure and work completes within 90 days.",
+        "{{partner}}"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__comments (id, request_id, author_id, body, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-82 days','+60 minutes'))",
+      "params": [
+        "perf-cmt-29",
+        "perf-req-28",
+        "{{adult2}}",
+        "Photo added to the description."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__requests (id, title, description, category, unit_ref, status, submitted_by, created_at, updated_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-86 days','-644 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-85 days','-644 minutes'), ?)",
+      "params": [
+        "perf-req-29",
+        "Roof replacement (lot 38)",
+        "Architectural shingles in weathered wood, replacing the original three-tab roof.",
+        "roof",
+        "Lot 14",
+        "under_review",
+        "{{child2}}",
+        "private"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-85 days','+0 minutes'))",
+      "params": [
+        "perf-vote-46",
+        "perf-req-29",
+        "{{partner}}",
+        "deny"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, notes, created_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-85 days','+40 minutes'))",
+      "params": [
+        "perf-vote-47",
+        "perf-req-29",
+        "{{adult2}}",
+        "approve",
+        "Color is outside the approved palette."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-85 days','+80 minutes'))",
+      "params": [
+        "perf-vote-48",
+        "perf-req-29",
+        "{{me}}",
+        "approve_with_conditions"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__decisions (id, request_id, status, rationale, decided_by, decided_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-83 days','+0 minutes'))",
+      "params": [
+        "perf-dec-29",
+        "perf-req-29",
+        "denied",
+        "Does not meet the design guidelines, section 4.2. Resubmit with a compliant material.",
+        "{{me}}"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__comments (id, request_id, author_id, body, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-85 days','+60 minutes'))",
+      "params": [
+        "perf-cmt-30",
+        "perf-req-29",
+        "{{me}}",
+        "The neighbor on the east side has signed off."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__comments (id, request_id, author_id, body, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-85 days','+150 minutes'))",
+      "params": [
+        "perf-cmt-31",
+        "perf-req-29",
+        "{{child2}}",
+        "Contractor can start within two weeks of approval."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__comments (id, request_id, author_id, body, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-85 days','+240 minutes'))",
+      "params": [
+        "perf-cmt-32",
+        "perf-req-29",
+        "{{adult2}}",
+        "Please confirm the setback from the property line."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__requests (id, title, description, category, unit_ref, status, submitted_by, created_at, updated_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-89 days','-667 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-88 days','-667 minutes'), ?)",
+      "params": [
+        "perf-req-30",
+        "Rear deck extension (lot 39)",
+        "Extend the deck eight feet toward the back fence, composite boards.",
+        "deck",
+        "Lot 21",
+        "under_review",
+        "{{partner}}",
+        "private"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, notes, created_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-88 days','+0 minutes'))",
+      "params": [
+        "perf-vote-49",
+        "perf-req-30",
+        "{{adult2}}",
+        "approve",
+        "No concerns."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-88 days','+40 minutes'))",
+      "params": [
+        "perf-vote-50",
+        "perf-req-30",
+        "{{me}}",
+        "approve_with_conditions"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__decisions (id, request_id, status, rationale, decided_by, decided_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-86 days','+0 minutes'))",
+      "params": [
+        "perf-dec-30",
+        "perf-req-30",
+        "approved",
+        "Approved as submitted.",
+        "{{partner}}"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__requests (id, title, description, category, unit_ref, status, submitted_by, created_at, updated_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-92 days','-690 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-91 days','-690 minutes'), ?)",
+      "params": [
+        "perf-req-31",
+        "Widen driveway (lot 40)",
+        "Add a three-foot paver strip on the north side.",
+        "driveway",
+        "Lot 28",
+        "under_review",
+        "{{adult2}}",
+        "public"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, notes, created_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-91 days','+0 minutes'))",
+      "params": [
+        "perf-vote-51",
+        "perf-req-31",
+        "{{me}}",
+        "approve_with_conditions",
+        "Fine as long as the height stays under six feet."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-91 days','+40 minutes'))",
+      "params": [
+        "perf-vote-52",
+        "perf-req-31",
+        "{{partner}}",
+        "approve"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__decisions (id, request_id, status, rationale, decided_by, decided_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-89 days','+0 minutes'))",
+      "params": [
+        "perf-dec-31",
+        "perf-req-31",
+        "approved_with_conditions",
+        "Approved provided the finish matches the existing structure and work completes within 90 days.",
+        "{{me}}"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__comments (id, request_id, author_id, body, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-91 days','+60 minutes'))",
+      "params": [
+        "perf-cmt-33",
+        "perf-req-31",
+        "{{me}}",
+        "Setback is five feet, per the survey."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__requests (id, title, description, category, unit_ref, status, submitted_by, created_at, updated_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-95 days','-713 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-94 days','-713 minutes'), ?)",
+      "params": [
+        "perf-req-32",
+        "Solar panel installation (lot 41)",
+        "Sixteen panels on the south-facing roof plane, black frames.",
+        "other",
+        "Lot 35",
+        "under_review",
+        "{{partner}}",
+        "private"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, notes, created_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-94 days','+0 minutes'))",
+      "params": [
+        "perf-vote-53",
+        "perf-req-32",
+        "{{partner}}",
+        "approve",
+        "Would like to see a site plan first."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-94 days','+40 minutes'))",
+      "params": [
+        "perf-vote-54",
+        "perf-req-32",
+        "{{adult2}}",
+        "approve"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__decisions (id, request_id, status, rationale, decided_by, decided_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-92 days','+0 minutes'))",
+      "params": [
+        "perf-dec-32",
+        "perf-req-32",
+        "approved",
+        "Approved as submitted.",
+        "{{partner}}"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__comments (id, request_id, author_id, body, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-94 days','+60 minutes'))",
+      "params": [
+        "perf-cmt-34",
+        "perf-req-32",
+        "{{partner}}",
+        "Thanks for the quick review."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__requests (id, title, description, category, unit_ref, status, submitted_by, created_at, updated_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-98 days','-736 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-97 days','-736 minutes'), ?)",
+      "params": [
+        "perf-req-33",
+        "Backyard shed (lot 42)",
+        "Eight by ten shed, siding and color to match the house.",
+        "addition",
+        "Lot 42",
+        "under_review",
+        "{{me}}",
+        "private"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, notes, created_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-97 days','+0 minutes'))",
+      "params": [
+        "perf-vote-55",
+        "perf-req-33",
+        "{{adult2}}",
+        "approve",
+        "Matches the streetscape."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-97 days','+40 minutes'))",
+      "params": [
+        "perf-vote-56",
+        "perf-req-33",
+        "{{me}}",
+        "approve_with_conditions"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, notes, created_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-97 days','+80 minutes'))",
+      "params": [
+        "perf-vote-57",
+        "perf-req-33",
+        "{{partner}}",
+        "approve",
+        "Color is outside the approved palette."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__decisions (id, request_id, status, rationale, decided_by, decided_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-95 days','+0 minutes'))",
+      "params": [
+        "perf-dec-33",
+        "perf-req-33",
+        "approved",
+        "Approved as submitted.",
+        "{{me}}"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__requests (id, title, description, category, unit_ref, status, submitted_by, created_at, updated_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-101 days','-759 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-100 days','-759 minutes'), ?)",
+      "params": [
+        "perf-req-34",
+        "Replace front door (lot 43)",
+        "Craftsman-style fiberglass door, stained walnut.",
+        "other",
+        "Lot 49",
+        "under_review",
+        "{{adult2}}",
+        "public"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-100 days','+0 minutes'))",
+      "params": [
+        "perf-vote-58",
+        "perf-req-34",
+        "{{me}}",
+        "approve_with_conditions"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, notes, created_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-100 days','+40 minutes'))",
+      "params": [
+        "perf-vote-59",
+        "perf-req-34",
+        "{{partner}}",
+        "approve",
+        "No concerns."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__decisions (id, request_id, status, rationale, decided_by, decided_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-98 days','+0 minutes'))",
+      "params": [
+        "perf-dec-34",
+        "perf-req-34",
+        "approved_with_conditions",
+        "Approved provided the finish matches the existing structure and work completes within 90 days.",
+        "{{partner}}"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__comments (id, request_id, author_id, body, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-100 days','+60 minutes'))",
+      "params": [
+        "perf-cmt-35",
+        "perf-req-34",
+        "{{adult2}}",
+        "Could you attach a photo of the current condition?"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__requests (id, title, description, category, unit_ref, status, submitted_by, created_at, updated_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-104 days','-782 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-103 days','-782 minutes'), ?)",
+      "params": [
+        "perf-req-35",
+        "Remove dead maple (lot 44)",
+        "Arborist report attached; replacing with two serviceberry trees.",
+        "landscaping",
+        "Lot 56",
+        "under_review",
+        "{{child}}",
+        "private"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-103 days','+0 minutes'))",
+      "params": [
+        "perf-vote-60",
+        "perf-req-35",
+        "{{partner}}",
+        "approve"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, notes, created_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-103 days','+40 minutes'))",
+      "params": [
+        "perf-vote-61",
+        "perf-req-35",
+        "{{adult2}}",
+        "deny",
+        "Fine as long as the height stays under six feet."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__decisions (id, request_id, status, rationale, decided_by, decided_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-101 days','+0 minutes'))",
+      "params": [
+        "perf-dec-35",
+        "perf-req-35",
+        "approved",
+        "Approved as submitted.",
+        "{{me}}"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__comments (id, request_id, author_id, body, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-103 days','+60 minutes'))",
+      "params": [
+        "perf-cmt-36",
+        "perf-req-35",
+        "{{me}}",
+        "Photo added to the description."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__requests (id, title, description, category, unit_ref, status, submitted_by, created_at, updated_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-107 days','-805 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-106 days','-805 minutes'), ?)",
+      "params": [
+        "perf-req-36",
+        "Pergola over patio (lot 45)",
+        "Twelve by twelve cedar pergola, freestanding.",
+        "deck",
+        "Lot 15",
+        "under_review",
+        "{{partner}}",
+        "private"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__votes (id, request_id, voter_id, vote, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-106 days','+0 minutes'))",
+      "params": [
+        "perf-vote-62",
+        "perf-req-36",
+        "{{adult2}}",
+        "deny"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__decisions (id, request_id, status, rationale, decided_by, decided_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-104 days','+0 minutes'))",
+      "params": [
+        "perf-dec-36",
+        "perf-req-36",
+        "denied",
+        "Does not meet the design guidelines, section 4.2. Resubmit with a compliant material.",
+        "{{partner}}"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__requests (id, title, description, category, unit_ref, status, submitted_by, created_at, updated_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-110 days','-828 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-109 days','-828 minutes'), ?)",
+      "params": [
+        "perf-req-37",
+        "Replace the side fence (lot 46)",
+        "Six-foot cedar, same line as the existing one.",
+        "fence",
+        "Lot 22",
+        "under_review",
+        "{{adult2}}",
+        "public"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__decisions (id, request_id, status, rationale, decided_by, decided_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-107 days','+0 minutes'))",
+      "params": [
+        "perf-dec-37",
+        "perf-req-37",
+        "approved_with_conditions",
+        "Approved provided the finish matches the existing structure and work completes within 90 days.",
+        "{{me}}"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__comments (id, request_id, author_id, body, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-109 days','+60 minutes'))",
+      "params": [
+        "perf-cmt-37",
+        "perf-req-37",
+        "{{partner}}",
+        "The neighbor on the east side has signed off."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__comments (id, request_id, author_id, body, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-109 days','+150 minutes'))",
+      "params": [
+        "perf-cmt-38",
+        "perf-req-37",
+        "{{adult2}}",
+        "Contractor can start within two weeks of approval."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__comments (id, request_id, author_id, body, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-109 days','+240 minutes'))",
+      "params": [
+        "perf-cmt-39",
+        "perf-req-37",
+        "{{me}}",
+        "Please confirm the setback from the property line."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__requests (id, title, description, category, unit_ref, status, submitted_by, created_at, updated_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-113 days','-851 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-112 days','-851 minutes'), ?)",
+      "params": [
+        "perf-req-38",
+        "Repaint exterior trim (lot 47)",
+        "Changing trim from white to a soft gray from the approved palette.",
+        "paint",
+        "Lot 29",
+        "under_review",
+        "{{me}}",
+        "private"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__decisions (id, request_id, status, rationale, decided_by, decided_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-110 days','+0 minutes'))",
+      "params": [
+        "perf-dec-38",
+        "perf-req-38",
+        "approved",
+        "Approved as submitted.",
+        "{{partner}}"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__comments (id, request_id, author_id, body, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-112 days','+60 minutes'))",
+      "params": [
+        "perf-cmt-40",
+        "perf-req-38",
+        "{{partner}}",
+        "Setback is five feet, per the survey."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__requests (id, title, description, category, unit_ref, status, submitted_by, created_at, updated_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-116 days','-874 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-115 days','-874 minutes'), ?)",
+      "params": [
+        "perf-req-39",
+        "Detached garage addition (lot 48)",
+        "Single-car garage, 20 by 24 feet, materials to match the house.",
+        "addition",
+        "Lot 36",
+        "under_review",
+        "{{child2}}",
+        "private"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__decisions (id, request_id, status, rationale, decided_by, decided_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-113 days','+0 minutes'))",
+      "params": [
+        "perf-dec-39",
+        "perf-req-39",
+        "approved",
+        "Approved as submitted.",
+        "{{me}}"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__requests (id, title, description, category, unit_ref, status, submitted_by, created_at, updated_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-119 days','-897 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-118 days','-897 minutes'), ?)",
+      "params": [
+        "perf-req-40",
+        "Front yard xeriscape (lot 49)",
+        "Remove turf and replace with native plantings and river rock.",
+        "landscaping",
+        "Lot 43",
+        "under_review",
+        "{{partner}}",
+        "public"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__decisions (id, request_id, status, rationale, decided_by, decided_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-116 days','+0 minutes'))",
+      "params": [
+        "perf-dec-40",
+        "perf-req-40",
+        "approved_with_conditions",
+        "Approved provided the finish matches the existing structure and work completes within 90 days.",
+        "{{partner}}"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_architectural_review__comments (id, request_id, author_id, body, created_at) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-118 days','+60 minutes'))",
+      "params": [
+        "perf-cmt-41",
+        "perf-req-40",
+        "{{adult2}}",
+        "Thanks for the quick review."
+      ]
+    }
+  ]
+}
