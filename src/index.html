@@ -471,14 +471,26 @@ function castVote(requestId, voteValue, notes) {
       votes[requestId] = prevVotes;
       if (movesToReview) requests = requests.map(r => r.id === requestId ? { ...r, status: "pending" } : r);
       render();
-      hubAlert("Could not record your vote: " + (e.message || "permission denied"));
+      console.error(e);
+      hubAlert("Couldn’t record your vote — try again.");
       return;
     }
     try {
       votes[requestId] = (votes[requestId] ?? []).filter(v => v.voter_id !== ME.id);
       votes[requestId] = [...votes[requestId], { id: result.id ?? id, request_id: requestId, voter_id: ME.id, vote: voteValue, notes, created_at: result.created_at ?? now }];
-      if (movesToReview) await db(`UPDATE app_architectural_review__requests SET status = 'under_review', updated_at = ? WHERE id = ?`, [now, requestId]);
     } catch {}
+    if (!movesToReview) return;
+    try {
+      await db(`UPDATE app_architectural_review__requests SET status = 'under_review', updated_at = ? WHERE id = ?`, [now, requestId]);
+    } catch (e) {
+      // The vote is stored; only the status move failed. Show the stored status
+      // rather than the optimistic one, and say which half did not happen.
+      console.error(e);
+      requests = requests.map(r => r.id === requestId ? { ...r, status: "pending" } : r);
+      try { await loadRequests(); } catch { /* the reverted status stands */ }
+      render();
+      hubAlert("Your vote was recorded, but the request’s status couldn’t be updated.");
+    }
   })();
 }
 
@@ -499,7 +511,8 @@ async function issueDecision(requestId, decision, rationale) {
     // submitter about — a decision that never persisted.
     if (prev) decisionMap.set(requestId, prev); else decisionMap.delete(requestId);
     render();
-    hubAlert("Could not record decision: " + (e.message || "permission denied"));
+    console.error(e);
+    hubAlert("Couldn’t record the decision — try again.");
     throw e;
   }
 }
@@ -549,7 +562,10 @@ async function uploadDoc(file, requestId) {
     ];
     renderDetail();
   } catch (err) {
-    hubAlert("Upload failed: " + err.message);
+    console.error(err);
+    // The hub's own refusals of a file (too large, type not allowed, too many
+    // uploads, storage full) are shown as given; anything else is ours to word.
+    hubAlert([413, 415, 429, 507].includes(err?.status) ? "Upload failed: " + err.message : "Couldn’t upload the document — try again.");
     renderDetail();
   }
 }
@@ -560,7 +576,8 @@ async function deleteDoc(docId, fileKey) {
     const res = await fetch(`${DOCS}/${docId}`, { method: "DELETE" });
     if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || "try again");
   } catch (e) {
-    hubAlert("Could not remove the document: " + e.message);
+    console.error(e);
+    hubAlert("Couldn’t remove the document — try again.");
     return;
   }
   if (fileKey) await files.delete(fileKey).catch(() => {});
@@ -575,9 +592,10 @@ async function deleteRequest(id) {
   // hub answers 200 with nothing changed when the caller may not delete it.
   try {
     const res = await db(`DELETE FROM app_architectural_review__requests WHERE id = ?`, [id]);
-    if (res.changed === 0) throw new Error("Only the submitter or the committee can delete it.");
+    if (res.changed === 0) throw Object.assign(new Error("Only the submitter or the committee can delete it."), { forUser: true });
   } catch (e) {
-    hubAlert("Could not delete the request: " + e.message);
+    console.error(e);
+    hubAlert(e?.forUser ? "Could not delete the request: " + e.message : "Couldn’t delete the request — try again.");
     return false;
   }
   await Promise.all(docList.map(d => Promise.all([
@@ -671,7 +689,8 @@ window.submitForm = async function() {
     renderDetail();
   } catch (e) {
     if (btn) { btn.disabled = false; btn.textContent = "Submit Request"; }
-    hubAlert("Could not submit the request: " + e.message);
+    console.error(e);
+    hubAlert("Couldn’t submit the request — try again.");
   }
 };
 
@@ -960,7 +979,8 @@ window.postComment = async function() {
     renderDetail();
   } catch (e) {
     if (btn) { btn.disabled = false; btn.textContent = "Post"; }
-    hubAlert("Could not post the comment: " + e.message);
+    console.error(e);
+    hubAlert("Couldn’t post the comment — try again.");
   }
 };
 
@@ -1107,7 +1127,8 @@ window.saveSettings = async function() {
     render();
   } catch (e) {
     if (btn) { btn.disabled = false; btn.textContent = "Save"; }
-    hubAlert("Could not save settings: " + e.message);
+    console.error(e);
+    hubAlert("Couldn’t save the settings — try again.");
   }
 };
 
@@ -1115,9 +1136,10 @@ window.toggleVisibility = async function(requestId, newVis) {
   const now = new Date().toISOString();
   try {
     const res = await db(`UPDATE app_architectural_review__requests SET visibility = ?, updated_at = ? WHERE id = ?`, [newVis, now, requestId]);
-    if (res.changed === 0) throw new Error("Only the submitter or the committee can change it.");
+    if (res.changed === 0) throw Object.assign(new Error("Only the submitter or the committee can change it."), { forUser: true });
   } catch (e) {
-    hubAlert("Could not change who sees this request: " + e.message);
+    console.error(e);
+    hubAlert(e?.forUser ? "Could not change who sees this request: " + e.message : "Couldn’t change who sees this request — try again.");
     return;
   }
   requests = requests.map(r => r.id === requestId ? { ...r, visibility: newVis } : r);
