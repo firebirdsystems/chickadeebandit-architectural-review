@@ -185,6 +185,8 @@
     .loading  { text-align: center; padding: 40px; color: var(--muted); }
     .back-link { font-size: 0.8rem; opacity: .75; cursor: pointer; margin-bottom: 3px; display: inline-block; }
     .back-link:hover { opacity: 1; }
+    .load-error { margin: 0 0 12px; padding: 10px 14px; border-radius: 10px; background: var(--hub-tint-danger, #fee2e2); color: var(--hub-tint-danger-fg, #b91c1c); font-size: 0.9rem; display: flex; gap: 10px; align-items: center; justify-content: space-between; }
+    .load-error-retry { background: none; border: 1px solid currentColor; border-radius: 8px; padding: 4px 10px; color: inherit; font: inherit; cursor: pointer; white-space: nowrap; }
     .search-row { margin-bottom: 12px; }
     .search-input {
       width: 100%; border: 1.5px solid var(--border-mid, var(--border, #d1d5db));
@@ -237,7 +239,9 @@ async function db(sql, params = []) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ sql, params }),
   });
-  return res.json();
+  const json = await res.json().catch(() => null);
+  if (!res.ok || !json || typeof json !== "object" || json.error) throw new Error(json?.error || "Couldn’t reach the hub. Try again.");
+  return json;
 }
 
 async function appendRecord(name, data) {
@@ -246,8 +250,8 @@ async function appendRecord(name, data) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
-  const json = await res.json().catch(() => ({}));
-  if (!res.ok || json.error) throw new Error(json.error || "Append failed");
+  const json = await res.json().catch(() => null);
+  if (!res.ok || !json || typeof json !== "object" || json.error) throw new Error(json?.error || "Append failed");
   return json;
 }
 
@@ -262,13 +266,13 @@ async function loadMembers() {
     memberMap = new Map(members.map(m => [m.id, m]));
     return;
   }
-  try {
-    const res  = await fetch(`${CONTEXT}?keys=family.members,family.groups`);
-    const data = await res.json();
-    members = data["family.members"] ?? [];
-    groups  = data["family.groups"]  ?? [];
-    memberMap = new Map(members.map(m => [m.id, m]));
-  } catch { members = []; groups = []; }
+  // A failed read throws: start() shows the load banner rather than an empty roster.
+  const res  = await fetch(`${CONTEXT}?keys=family.members,family.groups`);
+  const data = await res.json().catch(() => null);
+  if (!res.ok || !data || typeof data !== "object" || data.error || (Array.isArray(data.$errors) && data.$errors.some(k => k === "family.members" || k === "family.groups"))) throw new Error("Couldn’t reach the hub. Try again.");
+  members = data["family.members"] ?? [];
+  groups  = data["family.groups"]  ?? [];
+  memberMap = new Map(members.map(m => [m.id, m]));
 }
 
 async function loadSettings() {
@@ -361,10 +365,11 @@ async function loadComments(requestId) {
 }
 
 async function loadDocs(requestId) {
-  docs[requestId] = [];
-  if (!DOCS) return;
+  if (!DOCS) { docs[requestId] = []; return; }
+  // Unread stays unset: openDetail says so, and reopening the request reads again.
   const res = await fetch(`${DOCS}?sourceId=${encodeURIComponent(requestId)}`);
-  docs[requestId] = res.ok ? await res.json() : [];
+  if (!res.ok) throw new Error("documents unavailable");
+  docs[requestId] = await res.json();
 }
 
 // ─── Constants ─────────────────────────────────────────────────────────────
@@ -451,14 +456,25 @@ function castVote(requestId, voteValue, notes) {
   if (!ME) return;
   const now = new Date().toISOString();
   const id = crypto.randomUUID();
+  const prevVotes = votes[requestId] ?? [];
   votes[requestId] = (votes[requestId] ?? []).filter(v => v.voter_id !== ME.id);
   votes[requestId] = [...votes[requestId], { id, request_id: requestId, voter_id: ME.id, vote: voteValue, notes, created_at: now }];
   const req = requests.find(r => r.id === requestId);
   const movesToReview = req?.status === "pending";
   if (movesToReview) requests = requests.map(r => r.id === requestId ? { ...r, status: "under_review" } : r);
   (async () => {
+    let result;
     try {
-      const result = await appendRecord("votes", { request_id: requestId, vote: voteValue, notes });
+      result = await appendRecord("votes", { request_id: requestId, vote: voteValue, notes });
+    } catch (e) {
+      // The vote was refused or never arrived: take the optimistic one back.
+      votes[requestId] = prevVotes;
+      if (movesToReview) requests = requests.map(r => r.id === requestId ? { ...r, status: "pending" } : r);
+      render();
+      hubAlert("Could not record your vote: " + (e.message || "permission denied"));
+      return;
+    }
+    try {
       votes[requestId] = (votes[requestId] ?? []).filter(v => v.voter_id !== ME.id);
       votes[requestId] = [...votes[requestId], { id: result.id ?? id, request_id: requestId, voter_id: ME.id, vote: voteValue, notes, created_at: result.created_at ?? now }];
       if (movesToReview) await db(`UPDATE app_architectural_review__requests SET status = 'under_review', updated_at = ? WHERE id = ?`, [now, requestId]);
@@ -524,6 +540,7 @@ async function uploadDoc(file, requestId) {
         sourceId: requestId, sharedWith,
       }),
     });
+    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || "the document could not be saved");
     const { id: docId } = await res.json();
     if (!docs[requestId]) docs[requestId] = [];
     docs[requestId] = [
@@ -539,7 +556,13 @@ async function uploadDoc(file, requestId) {
 
 async function deleteDoc(docId, fileKey) {
   if (!await hubConfirm({ message: "Remove this document?", confirmLabel: "Remove", destructive: true })) return;
-  await fetch(`${DOCS}/${docId}`, { method: "DELETE" });
+  try {
+    const res = await fetch(`${DOCS}/${docId}`, { method: "DELETE" });
+    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || "try again");
+  } catch (e) {
+    hubAlert("Could not remove the document: " + e.message);
+    return;
+  }
   if (fileKey) await files.delete(fileKey).catch(() => {});
   if (docs[detailId]) docs[detailId] = docs[detailId].filter(d => d.id !== docId);
   renderDetail();
@@ -548,13 +571,19 @@ async function deleteDoc(docId, fileKey) {
 async function deleteRequest(id) {
   if (!await hubConfirm({ message: "Delete this request?", description: "All votes, comments, and documents will also be removed.", confirmLabel: "Delete", destructive: true })) return false;
   const docList = DOCS ? (docs[id] ?? []) : [];
-  await Promise.all([
-    db(`DELETE FROM app_architectural_review__requests WHERE id = ?`, [id]),
-    ...docList.map(d => Promise.all([
-      fetch(`${DOCS}/${d.id}`, { method: "DELETE" }),
-      d.fileKey ? files.delete(d.fileKey).catch(() => {}) : Promise.resolve(),
-    ])),
-  ]);
+  // The request goes first, and its documents only once it is really gone: the
+  // hub answers 200 with nothing changed when the caller may not delete it.
+  try {
+    const res = await db(`DELETE FROM app_architectural_review__requests WHERE id = ?`, [id]);
+    if (res.changed === 0) throw new Error("Only the submitter or the committee can delete it.");
+  } catch (e) {
+    hubAlert("Could not delete the request: " + e.message);
+    return false;
+  }
+  await Promise.all(docList.map(d => Promise.all([
+    fetch(`${DOCS}/${d.id}`, { method: "DELETE" }).catch(() => {}),
+    d.fileKey ? files.delete(d.fileKey).catch(() => {}) : Promise.resolve(),
+  ])));
   requests = requests.filter(r => r.id !== id);
   delete votes[id]; delete comments[id]; delete docs[id];
   return true;
@@ -642,7 +671,7 @@ window.submitForm = async function() {
     renderDetail();
   } catch (e) {
     if (btn) { btn.disabled = false; btn.textContent = "Submit Request"; }
-    throw e;
+    hubAlert("Could not submit the request: " + e.message);
   }
 };
 
@@ -729,7 +758,10 @@ async function openDetail(id) {
   if (!votes[id])    pending.push(loadVotes(id));
   if (!comments[id]) pending.push(loadComments(id));
   if (!docs[id])     pending.push(loadDocs(id));
-  if (pending.length) await Promise.all(pending);
+  if (pending.length) {
+    try { await Promise.all(pending); }
+    catch { hubAlert("Couldn’t load everything for this request. Reopen it to try again."); }
+  }
   renderDetail();
 }
 
@@ -928,7 +960,7 @@ window.postComment = async function() {
     renderDetail();
   } catch (e) {
     if (btn) { btn.disabled = false; btn.textContent = "Post"; }
-    throw e;
+    hubAlert("Could not post the comment: " + e.message);
   }
 };
 
@@ -961,6 +993,7 @@ function renderList() {
   const cardsHtml = filtered.length === 0
     ? (searchQ
       ? `<div class="empty">No requests match "${esc(searchQ)}".</div>`
+      : loadFailed ? ""
       : `<div class="empty">No ${filter !== "all" ? FL[filter].toLowerCase() + " " : ""}requests.</div>`)
     : filtered.map(req => {
         return `
@@ -985,10 +1018,11 @@ function renderList() {
     <header>
       <div><h1>${glyph("columns", { accent: "currentColor" })} ARC Requests</h1><div class="sub">${subLine}</div></div>
       <div style="display:flex;gap:6px">
-        ${(isVoter(ME) || ME?.isAdmin) ? `<button class="btn btn-icon" onclick="openSettingsModal()" title="Settings" aria-label="Settings">${glyph("gear", { accent: "currentColor" })}</button>` : ""}
+        ${(isVoter(ME) || ME?.isAdmin) && !loadFailed ? `<button class="btn btn-icon" onclick="openSettingsModal()" title="Settings" aria-label="Settings">${glyph("gear", { accent: "currentColor" })}</button>` : ""}
         ${ME ? `<button class="btn btn-icon" onclick="openSubmitForm()" title="Submit Request" aria-label="Submit Request">${glyph("plus", { accent: "currentColor" })}</button>` : ""}
       </div>
     </header>
+    ${loadFailed ? `<div class="load-error" data-testid="load-error" role="alert"><span>Couldn’t load the requests.</span> <button type="button" class="load-error-retry" data-testid="load-retry" onclick="retryLoad()">Try again</button></div>` : ""}
     <div class="item-tabs">${tabsHtml}</div>
     ${visible.length ? `<div class="search-row"><input id="search" class="search-input" type="search" placeholder="Search requests…" aria-label="Search requests" value="${esc(searchQ)}" /></div>` : ""}
     <div id="request-list">${cardsHtml}</div>`;
@@ -1073,13 +1107,19 @@ window.saveSettings = async function() {
     render();
   } catch (e) {
     if (btn) { btn.disabled = false; btn.textContent = "Save"; }
-    throw e;
+    hubAlert("Could not save settings: " + e.message);
   }
 };
 
 window.toggleVisibility = async function(requestId, newVis) {
   const now = new Date().toISOString();
-  await db(`UPDATE app_architectural_review__requests SET visibility = ?, updated_at = ? WHERE id = ?`, [newVis, now, requestId]);
+  try {
+    const res = await db(`UPDATE app_architectural_review__requests SET visibility = ?, updated_at = ? WHERE id = ?`, [newVis, now, requestId]);
+    if (res.changed === 0) throw new Error("Only the submitter or the committee can change it.");
+  } catch (e) {
+    hubAlert("Could not change who sees this request: " + e.message);
+    return;
+  }
   requests = requests.map(r => r.id === requestId ? { ...r, visibility: newVis } : r);
   renderDetail();
 };
@@ -1101,11 +1141,22 @@ window.openSubmitForm    = openSubmitForm;
 window.openSettingsModal = openSettingsModal;
 window.closeModal        = closeModal;
 
-(async () => {
-  await Promise.all([loadMembers(), loadRequests(), loadDecisions(), loadSettings()]);
+// Set while the first load has not succeeded: the list shows a banner with a
+// retry and does not claim there are no requests.
+let loadFailed = false;
+
+async function start() {
+  try {
+    await Promise.all([loadMembers(), loadRequests(), loadDecisions(), loadSettings()]);
+    loadFailed = false;
+  } catch {
+    loadFailed = true;
+  }
   render();
-  handleDeepLink();
-})();
+  if (!loadFailed) handleDeepLink();
+}
+window.retryLoad = start;
+start();
 </script>
 </body>
 </html>
