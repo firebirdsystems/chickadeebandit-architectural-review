@@ -725,7 +725,7 @@ function openVoteModal(existingVote) {
     </div>
     <div class="form-group">
       <label>Notes <span class="muted-label">(optional)</span></label>
-      <textarea id="v-notes" rows="3" placeholder="Rationale, conditions, concerns…">${esc(existingVote?.notes ?? "")}</textarea>
+      <textarea id="v-notes" rows="3" maxlength="2000" placeholder="Rationale, conditions, concerns…">${esc(existingVote?.notes ?? "")}</textarea>
     </div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
@@ -757,7 +757,7 @@ function openDecisionModal(req) {
     </div>
     <div class="form-group">
       <label>Written Rationale</label>
-      <textarea id="d-rationale" rows="4" placeholder="Provide the committee's reasoning and any conditions or requirements…">${esc(req.decision_note ?? "")}</textarea>
+      <textarea id="d-rationale" rows="4" maxlength="4000" placeholder="Provide the committee's reasoning and any conditions or requirements…">${esc(req.decision_note ?? "")}</textarea>
     </div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
@@ -882,7 +882,9 @@ function renderDetail() {
       ${meIsAdmin ? `<button class="btn btn-ghost btn-sm" aria-label="Remove document" onclick="event.preventDefault();doDelDoc('${jsAttr(d.id)}','${jsAttr(d.fileKey ?? '')}')">${glyph("close")}</button>` : ""}
     </a>`).join("");
 
-  const uploadHtml = window.__FILES_URL && ME && isAdult(ME) ? `
+  // Mirrors the hub: file_acls.write admits the committee group (and hub admins),
+  // document_acls.write adults. Anyone else would only be refused.
+  const uploadHtml = window.__FILES_URL && ME && isAdult(ME) && (meIsAdmin || ME.isAdmin === true) ? `
     <div class="upload-area" id="upload-area"
       onclick="triggerUpload()"
       ondragover="event.preventDefault();this.classList.add('dragover')"
@@ -948,7 +950,7 @@ function renderDetail() {
       ${commentsHtml}
       ${ME ? `
         <div style="margin-top:12px;display:flex;gap:8px;align-items:flex-end">
-          <textarea id="comment-input" rows="2" placeholder="Add a comment…"
+          <textarea id="comment-input" rows="2" maxlength="2000" placeholder="Add a comment…"
             style="flex:1;border:1.5px solid var(--border);border-radius:8px;padding:8px 10px;font-size:.88rem;font-family:inherit;resize:none;outline:none;transition:border-color .15s;background:white;color:inherit"
             onfocus="this.style.borderColor='var(--accent)'"
             onblur="this.style.borderColor='var(--border)'"></textarea>
