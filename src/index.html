@@ -538,6 +538,7 @@ async function uploadDoc(file, requestId) {
   if (!DOCS || !ME) return;
   const area = document.getElementById("upload-area");
   if (area) area.textContent = "⏳ Uploading…";
+  let unfiled = null;
   try {
     const { id: fileId } = await files.upload(file);
     // Mirror the request's visibility in the household document library: a public
@@ -560,7 +561,13 @@ async function uploadDoc(file, requestId) {
         sourceId: requestId, sharedWith,
       }),
     });
-    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || "the document could not be saved");
+    if (!res.ok) {
+      // Refused before anything was stored (a 4xx, or 507 over the storage
+      // limit): no document names the upload and none will, so it is
+      // discarded below. Any other failure may have stored the document.
+      if ((res.status >= 400 && res.status < 500) || res.status === 507) unfiled = fileId;
+      throw new Error((await res.json().catch(() => ({}))).error || "the document could not be saved");
+    }
     const { id: docId } = await res.json();
     if (!docs[requestId]) docs[requestId] = [];
     docs[requestId] = [
@@ -570,6 +577,7 @@ async function uploadDoc(file, requestId) {
     renderDetail();
   } catch (err) {
     console.error(err);
+    if (unfiled) files.delete(unfiled).catch(() => {});
     // The hub's own refusals of a file (too large, type not allowed, too many
     // uploads, storage full) are shown as given; anything else is ours to word.
     hubAlert([413, 415, 429, 507].includes(err?.status) ? "Upload failed: " + err.message : "Couldn’t upload the document — try again.");
