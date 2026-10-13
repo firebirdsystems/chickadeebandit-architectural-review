@@ -432,23 +432,28 @@ async function submitRequest(fields) {
   const id  = crypto.randomUUID();
   const now = new Date().toISOString();
   const vis = fields.visibility ?? settings.default_visibility;
-  await db(
+  const res = await db(
     `INSERT INTO app_architectural_review__requests (id, title, description, category, unit_ref, status, submitted_by, decision_note, visibility, created_at, updated_at)
      VALUES (?, ?, ?, ?, ?, 'pending', ?, '', ?, ?, ?)`,
     [id, fields.title, fields.description, fields.category, fields.unit_ref, ME?.id ?? "system", vis, now, now]
   );
-  const tasks = [loadRequests()];
+  if (res.changed === 0) throw new Error("request insert changed no rows");
+  // The request is stored from here on: nothing below may report it as failed
+  // (a retry would submit it twice). Show the row as written rather than re-reading,
+  // and do not wait for the committee ping: neither may hold the form open.
+  requests = [{ id, title: fields.title, description: fields.description, category: fields.category, unit_ref: fields.unit_ref, status: "pending", submitted_by: ME?.id ?? "system", decision_note: "", decided_at: null, decided_by: null, visibility: vis, created_at: now, updated_at: now }, ...requests];
+  // A request this new has no votes, comments or documents to read.
+  votes[id] = []; comments[id] = []; docs[id] = [];
   // Only ping the committee (the reviewers). Falling back to a household-wide
   // "adults" broadcast would leak a private request's title to everyone; and with
   // no committee configured there is nobody to review it yet.
   if (settings.committee_group_id) {
-    tasks.push(notify(
+    notify(
       `New ARC request: ${fields.title}`,
       `${ME?.name ?? "Someone"} submitted an ARC request.`,
       settings.committee_group_id,
-    ));
+    );
   }
-  await Promise.all(tasks);
   return id;
 }
 
@@ -481,7 +486,9 @@ function castVote(requestId, voteValue, notes) {
     } catch {}
     if (!movesToReview) return;
     try {
-      await db(`UPDATE app_architectural_review__requests SET status = 'under_review', updated_at = ? WHERE id = ?`, [now, requestId]);
+      // A narrowed write answers 200 with nothing changed: that is a failed move too.
+      const res = await db(`UPDATE app_architectural_review__requests SET status = 'under_review', updated_at = ? WHERE id = ?`, [now, requestId]);
+      if (res.changed === 0) throw new Error("status move changed no rows");
     } catch (e) {
       // The vote is stored; only the status move failed. Show the stored status
       // rather than the optimistic one, and say which half did not happen.
@@ -613,6 +620,7 @@ async function notify(title, body, audience) {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ title, body, url: `/run/${APP_ID}`, audience: aud }),
+    keepalive: true, // callers do not wait for it; let it outlive the page
   }).catch(() => {});
 }
 
@@ -676,22 +684,23 @@ window.submitForm = async function() {
   if (!desc) { document.getElementById("f-desc").focus(); return; }
   const btn = modalEl?.querySelector(".modal-actions .btn-primary");
   if (btn) { btn.disabled = true; btn.textContent = "Submitting…"; }
+  let id;
   try {
-    const id = await submitRequest({
+    id = await submitRequest({
       title, description: desc,
       category:   document.getElementById("f-cat").value,
       unit_ref:   document.getElementById("f-unit").value.trim(),
       visibility: document.getElementById("f-vis").value,
     });
-    closeModal();
-    detailId = id;
-    await Promise.all([loadVotes(id), loadComments(id), loadDocs(id)]);
-    renderDetail();
   } catch (e) {
     if (btn) { btn.disabled = false; btn.textContent = "Submit Request"; }
     console.error(e);
     hubAlert("Couldn’t submit the request — try again.");
+    return;
   }
+  // Submitted. A failed read below is a load problem, not a failed submit.
+  closeModal();
+  await openDetail(id);
 };
 
 // ─── Vote modal ─────────────────────────────────────────────────────────────
