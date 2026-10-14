@@ -206,7 +206,7 @@ import {
   committeeGroup as _committeeGroup,
   isVoter       as _isVoter,
   canSeeRequest  as _canSeeRequest,
-  DECISION_STATUSES, searchableFields,
+  DECISION_STATUSES, searchableFields, failureLine, uploadFailureLine,
 } from "./logic.js";
 
 const CONTEXT          = window.__CONTEXT_URL      ?? "";
@@ -251,7 +251,9 @@ async function appendRecord(name, data) {
     body: JSON.stringify(data),
   });
   const json = await res.json().catch(() => null);
-  if (!res.ok || !json || typeof json !== "object" || json.error) throw new Error(json?.error || "Append failed");
+  if (!res.ok || !json || typeof json !== "object" || json.error) {
+    throw Object.assign(new Error(json?.error || "Append failed"), { status: res.status, code: json?.code });
+  }
   return json;
 }
 
@@ -475,9 +477,11 @@ function castVote(requestId, voteValue, notes) {
       // The vote was refused or never arrived: take the optimistic one back.
       votes[requestId] = prevVotes;
       if (movesToReview) requests = requests.map(r => r.id === requestId ? { ...r, status: "pending" } : r);
+      // Removed or moved on meanwhile: show what is stored.
+      if (e?.status === 404 || e?.status === 409) await loadRequests().catch(() => {});
       render();
       console.error(e);
-      hubAlert("Couldn’t record your vote — try again.");
+      hubAlert(failureLine(e, { action: "record your vote", thing: "request" }));
       return;
     }
     try {
@@ -517,9 +521,11 @@ async function issueDecision(requestId, decision, rationale) {
     // the configured committee group). Roll back so we don't show — and notify a
     // submitter about — a decision that never persisted.
     if (prev) decisionMap.set(requestId, prev); else decisionMap.delete(requestId);
+    // Removed or decided meanwhile: show what is stored.
+    if (e?.status === 404 || e?.status === 409) await Promise.all([loadRequests(), loadDecisions()]).catch(() => {});
     render();
     console.error(e);
-    hubAlert("Couldn’t record the decision — try again.");
+    hubAlert(failureLine(e, { action: "record the decision", thing: "request" }));
     throw e;
   }
 }
@@ -566,21 +572,22 @@ async function uploadDoc(file, requestId) {
       // limit): no document names the upload and none will, so it is
       // discarded below. Any other failure may have stored the document.
       if ((res.status >= 400 && res.status < 500) || res.status === 507) unfiled = fileId;
-      throw new Error((await res.json().catch(() => ({}))).error || "the document could not be saved");
+      const body = await res.json().catch(() => ({}));
+      throw Object.assign(new Error(body?.error || "the document could not be saved"), { status: res.status, code: body?.code });
     }
     const { id: docId } = await res.json();
     if (!docs[requestId]) docs[requestId] = [];
     docs[requestId] = [
-      { id: docId, title: file.name, fileKey: fileId, mimeType: file.type, sizeBytes: file.size, createdAt: new Date().toISOString() },
+      { id: docId, title: file.name, fileKey: fileId, mimeType: file.type, sizeBytes: file.size, ownerId: ME.id, createdAt: new Date().toISOString() },
       ...docs[requestId],
     ];
     renderDetail();
   } catch (err) {
     console.error(err);
     if (unfiled) files.delete(unfiled).catch(() => {});
-    // The hub's own refusals of a file (too large, type not allowed, too many
-    // uploads, storage full) are shown as given; anything else is ours to word.
-    hubAlert([413, 415, 429, 507].includes(err?.status) ? "Upload failed: " + err.message : "Couldn’t upload the document — try again.");
+    // The hub's refusals of a file (too large, type not allowed, too many
+    // uploads, storage full) get lines of their own; never the hub's text.
+    hubAlert(uploadFailureLine(err, { action: "upload the document", thing: "document" }));
     renderDetail();
   }
 }
@@ -589,10 +596,15 @@ async function deleteDoc(docId, fileKey) {
   if (!await hubConfirm({ message: "Remove this document?", confirmLabel: "Remove", destructive: true })) return;
   try {
     const res = await fetch(`${DOCS}/${docId}`, { method: "DELETE" });
-    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || "try again");
+    if (!res.ok) throw Object.assign(new Error((await res.json().catch(() => ({}))).error || "try again"), { status: res.status });
   } catch (e) {
     console.error(e);
-    hubAlert("Couldn’t remove the document — try again.");
+    // The hub lets a document's owner and admins remove it (403 for anyone else).
+    hubAlert(failureLine(e, { action: "remove the document", thing: "document" }));
+    if (e?.status !== 404) return;
+    // Already gone: take it off the screen too.
+    if (docs[detailId]) docs[detailId] = docs[detailId].filter(d => d.id !== docId);
+    renderDetail();
     return;
   }
   if (fileKey) await files.delete(fileKey).catch(() => {});
@@ -879,12 +891,12 @@ function renderDetail() {
         <div class="doc-name">${esc(d.title)}</div>
         <div class="doc-meta">${formatBytes(d.sizeBytes ?? 0)} · ${fmtDate(d.createdAt)}</div>
       </div>
-      ${meIsAdmin ? `<button class="btn btn-ghost btn-sm" aria-label="Remove document" onclick="event.preventDefault();doDelDoc('${jsAttr(d.id)}','${jsAttr(d.fileKey ?? '')}')">${glyph("close")}</button>` : ""}
+      ${ME?.isAdmin === true || (ME && d.ownerId === ME.id) ? `<button class="btn btn-ghost btn-sm" aria-label="Remove document" onclick="event.preventDefault();doDelDoc('${jsAttr(d.id)}','${jsAttr(d.fileKey ?? '')}')">${glyph("close")}</button>` : ""}
     </a>`).join("");
 
-  // Mirrors the hub: file_acls.write admits the committee group (and hub admins),
-  // document_acls.write adults. Anyone else would only be refused.
-  const uploadHtml = window.__FILES_URL && ME && isAdult(ME) && (meIsAdmin || ME.isAdmin === true) ? `
+  // Mirrors the hub: file_acls.write and document_acls.write admit adults. The
+  // committee, admins and the adult who submitted the request attach to it.
+  const uploadHtml = window.__FILES_URL && ME && isAdult(ME) && (meIsAdmin || ME.isAdmin === true || req.submitted_by === ME.id) ? `
     <div class="upload-area" id="upload-area"
       onclick="triggerUpload()"
       ondragover="event.preventDefault();this.classList.add('dragover')"

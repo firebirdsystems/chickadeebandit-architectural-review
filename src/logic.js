@@ -67,3 +67,37 @@ export function canSeeRequest(req, me, groups, committeeGroupId) {
 export function searchableFields(item) {
   return [item.title, item.description, item.category, item.unit_ref];
 }
+
+/**
+ * The line a failed write shows (app-template CLAUDE.md, "Refused, gone, or
+ * failed: which line"): "try again" only when retrying can work. `action` and
+ * `thing` are the app's own words. Decided from the error's `status` / `code`,
+ * never from the hub's text. For the append-record endpoint: 403 is its write
+ * ACL (the committee group), 404 a request the caller cannot see or that is
+ * gone, 409 a request whose state no longer takes the record.
+ */
+export function failureLine(e, { action, thing } = {}) {
+  if (e?.forUser) return e.message;
+  if (e?.code === "UNIQUE_CONSTRAINT" || /UNIQUE constraint failed/i.test(String(e?.message ?? ""))) return `That ${thing} already exists.`;
+  if (e?.status === 403) return `You don’t have permission to ${action}.`;
+  if (e?.status === 507) return "The household’s storage is full — free up space first.";
+  if (e?.status === 404) return `This ${thing} has been removed.`;
+  if (e?.status === 409) return `This ${thing} was changed by someone else — check it first.`;
+  return `Couldn’t ${action} — try again.`;
+}
+
+/**
+ * The line a failed document upload shows: the file goes to POST /api/files,
+ * then its record to the documents endpoint. The upload's own refusals of the
+ * file get a line of their own: 413 too large, 415 a type the hub does not
+ * take. 429 is either endpoint's rate limit. The documents endpoint's 404 is
+ * the file just uploaded not being found, which a fresh upload can fix, so it
+ * is not "removed". The rest follows `failureLine`.
+ */
+export function uploadFailureLine(e, words) {
+  if (e?.status === 413) return "That file is too large.";
+  if (e?.status === 415) return "That kind of file can’t be uploaded.";
+  if (e?.status === 429) return "Too many tries — wait a minute and try again.";
+  if (e?.status === 404) return `Couldn’t ${words.action} — try again.`;
+  return failureLine(e, words);
+}

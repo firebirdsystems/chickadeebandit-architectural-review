@@ -138,9 +138,7 @@
     }
   },
   "file_acls": {
-    "write": {
-      "require_group_setting": { "settings_table": "settings", "settings_key": "committee_group_id" }
-    },
+    "write": { "require_role": "adult" },
     "read": "document_acl"
   },
   "document_acls": {
