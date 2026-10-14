@@ -166,7 +166,6 @@
     "label": "ARC Requests"
   },
   "resource_limits": {
-    "max_db_bytes": 209715200,
     "max_files_bytes": 524288000,
     "max_docs_bytes": 524288000
   },
