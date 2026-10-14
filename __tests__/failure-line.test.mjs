@@ -29,6 +29,16 @@ describe("failureLine", () => {
     expect(failureLine(err({ forUser: true }, "Pick a decision first."), vote)).toBe("Pick a decision first.");
     expect(failureLine(err({ status: 500 }, "D1_ERROR: boom"), vote)).not.toMatch(/D1_ERROR/);
   });
+  it("asks for a wait on a rate limit", () => {
+    expect(failureLine(err({ status: 429 }), vote)).toBe("Too many tries — wait a minute and try again.");
+  });
+  it("splits a write that changed nothing by the caller's re-read", () => {
+    const del = { action: "delete the request", thing: "request" };
+    expect(failureLine(null, { ...del, found: false })).toBe("This request has been removed.");
+    expect(failureLine(null, { ...del, found: true })).toBe("You don’t have permission to delete the request.");
+    expect(failureLine(null, { ...del, found: true, guarded: true })).toBe("This request was changed by someone else — check it first.");
+    expect(failureLine(null, { ...del, found: null })).toBe("Couldn’t delete the request — try again.");
+  });
 });
 
 // The hub's answers, from files-handler.ts and documents-handler.ts: 413 too
